@@ -56,6 +56,28 @@ class Sphere extends Mesh {
           .add(Vector3.scale(dv, y))
           .normalise();
 
+        // uniformly distribute points
+        normal.x *= Math.sqrt(
+          1 -
+            0.5 * normal.y * normal.y -
+            0.5 * normal.z * normal.z +
+            (normal.y * normal.y * normal.z * normal.z) / 3
+        );
+        normal.y *= Math.sqrt(
+          1 -
+            0.5 * normal.x * normal.x -
+            0.5 * normal.z * normal.z +
+            (normal.x * normal.x * normal.z * normal.z) / 3
+        );
+        normal.z *= Math.sqrt(
+          1 -
+            0.5 * normal.y * normal.y -
+            0.5 * normal.x * normal.x +
+            (normal.y * normal.y * normal.x * normal.x) / 3
+        );
+
+        normal.normalise();
+
         const position = Vector3.scale(normal, radius);
         vertices.push({
           position,
