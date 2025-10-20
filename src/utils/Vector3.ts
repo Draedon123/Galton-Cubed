@@ -1,11 +1,7 @@
 class Vector3 {
   public readonly components: Float32Array;
   constructor(x: number = 0, y: number = 0, z: number = 0) {
-    this.components = new Float32Array(3);
-
-    this.components[0] = x;
-    this.components[1] = y;
-    this.components[2] = z;
+    this.components = new Float32Array([x, y, z]);
   }
 
   public static cross(a: Vector3, b: Vector3): Vector3 {
