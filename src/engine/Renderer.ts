@@ -2,6 +2,7 @@ import { GPUTimer } from "../utils/GPUTimer";
 import { Matrix4Buffer } from "../utils/Matrix4Buffer";
 import { resolveBasePath } from "../utils/resolveBasePath";
 import { Camera, type CameraOptions } from "./Camera";
+import { Sphere } from "./meshes/Sphere";
 import { Shader } from "./Shader";
 
 type RendererSettings = {
@@ -12,15 +13,7 @@ type RendererSettings = {
   }>;
 };
 
-// prettier-ignore
-const vertices = new Float32Array([
-  0.5, 0.5, 0.5,
-  0.5, -0.5, 0.5,
-  -0.5, -0.5, 0.5,
-  -0.5, 0.5, 0.5,
-  0.5, 0.5, 0.5,
-  -0.5, -0.5, 0.5,
-]);
+const sphere = new Sphere(20, 2);
 
 class Renderer {
   public readonly canvas: HTMLCanvasElement;
@@ -107,6 +100,8 @@ class Renderer {
       return;
     }
 
+    sphere.initialise(this.device);
+
     await this.initialiseRendering();
 
     new ResizeObserver((entries) => {
@@ -150,16 +145,10 @@ class Renderer {
     );
 
     this.depthTexture = this.createDepthTexture();
-
-    this.vertexBuffer = this.device.createBuffer({
-      label: "Cube Buffer",
-      size: 1 * vertices.byteLength,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    this.device.queue.writeBuffer(this.vertexBuffer, 0, vertices);
+    this.vertexBuffer = sphere.vertexBuffer;
 
     this.objectPositions = this.device.createBuffer({
-      label: "Cube Buffer",
+      label: "Positions Buffer",
       size: 2 * 4 * 3,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
@@ -237,6 +226,7 @@ class Renderer {
       },
       primitive: {
         cullMode: "front",
+        // topology: "line-list",
       },
       depthStencil: {
         format: "depth24plus",
@@ -275,7 +265,8 @@ class Renderer {
     renderPass.setVertexBuffer(1, this.objectPositions);
     renderPass.setBindGroup(0, this.renderBindGroup);
     renderPass.setPipeline(this.renderPipeline);
-    renderPass.draw(vertices.length / 3, 2);
+
+    sphere.render(renderPass);
 
     renderPass.end();
     this.device.queue.submit([commandEncoder.finish()]);

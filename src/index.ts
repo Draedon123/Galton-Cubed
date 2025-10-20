@@ -17,7 +17,7 @@ async function main(): Promise<void> {
 
   await renderer.initialise();
 
-  renderer.camera.position = new Vector3(5, 5, 5);
+  renderer.camera.position = new Vector3(4, 2.5, 2.5);
   renderer.camera.fovDegrees = 60;
   renderer.camera.lookAt = new Vector3(0, 0, 0);
 

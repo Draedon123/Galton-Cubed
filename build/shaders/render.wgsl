@@ -1,5 +1,6 @@
 struct Vertex {
   @location(0) position: vec3f,
+  @location(1) offset: vec3f,
 }
 
 struct VertexOutput {
@@ -12,7 +13,7 @@ struct VertexOutput {
 fn vertexMain(vertex: Vertex) -> VertexOutput {
   var output: VertexOutput;
 
-  output.position = perspectiveViewMatrix * vec4f(vertex.position, 1.0);
+  output.position = perspectiveViewMatrix * vec4f(vertex.position + vertex.offset, 1.0);
 
   return output;
 }
