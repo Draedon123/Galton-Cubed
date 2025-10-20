@@ -1,9 +1,9 @@
 import { Vector3 } from "../../utils/Vector3";
-import { Mesh } from "./Mesh";
+import { Mesh, type Vertex } from "./Mesh";
 
 class Sphere extends Mesh {
   constructor(resolution: number, radius: number) {
-    const vertices: Vector3[] = [];
+    const vertices: Vertex[] = [];
     const indices: number[] = [];
 
     const directions = [
@@ -37,8 +37,8 @@ class Sphere extends Mesh {
     indexOffset: number,
     resolution: number,
     radius: number
-  ): { vertices: Vector3[]; indices: number[] } {
-    const vertices: Vector3[] = [];
+  ): { vertices: Vertex[]; indices: number[] } {
+    const vertices: Vertex[] = [];
     const indices: number[] = [];
 
     const u = new Vector3(direction.y, direction.z, direction.x).scale(
@@ -52,12 +52,15 @@ class Sphere extends Mesh {
 
     for (let x = 0; x < resolution; x++) {
       for (let y = 0; y < resolution; y++) {
-        vertices.push(
-          Vector3.add(corner, Vector3.scale(du, x))
-            .add(Vector3.scale(dv, y))
-            .normalise()
-            .scale(radius)
-        );
+        const normal = Vector3.add(corner, Vector3.scale(du, x))
+          .add(Vector3.scale(dv, y))
+          .normalise();
+
+        const position = Vector3.scale(normal, radius);
+        vertices.push({
+          position,
+          normal,
+        });
 
         if (x !== resolution - 1 && y !== resolution - 1) {
           const currentIndex = indexOffset + x + y * resolution;

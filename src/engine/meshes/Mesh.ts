@@ -1,5 +1,10 @@
 import type { Vector3 } from "../../utils/Vector3";
 
+type Vertex = {
+  position: Vector3;
+  normal: Vector3;
+};
+
 class Mesh {
   public vertexBuffer!: GPUBuffer;
   public indexBuffer!: GPUBuffer | null;
@@ -7,11 +12,11 @@ class Mesh {
   private vertices!: Float32Array;
   private indices!: Uint16Array | Uint32Array | null;
 
-  private readonly rawVertices: Vector3[];
+  private readonly rawVertices: Vertex[];
   private readonly rawIndices: number[] | null;
   private readonly label: string;
   constructor(
-    rawVertices: Vector3[],
+    rawVertices: Vertex[],
     rawIndices?: number[],
     label: string = ""
   ) {
@@ -22,7 +27,16 @@ class Mesh {
 
   public initialise(device: GPUDevice): void {
     this.vertices = new Float32Array(
-      this.rawVertices.map((vertex) => [vertex.x, vertex.y, vertex.z]).flat()
+      this.rawVertices
+        .map((vertex) => [
+          vertex.position.x,
+          vertex.position.y,
+          vertex.position.z,
+          vertex.normal.x,
+          vertex.normal.y,
+          vertex.normal.z,
+        ])
+        .flat()
     );
 
     if (this.rawIndices) {
@@ -74,3 +88,4 @@ class Mesh {
 }
 
 export { Mesh };
+export type { Vertex };

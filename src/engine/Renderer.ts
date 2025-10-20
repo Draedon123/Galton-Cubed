@@ -192,13 +192,19 @@ class Renderer {
         module: shader.shader,
         buffers: [
           {
-            arrayStride: 3 * 4,
+            arrayStride: 6 * 4,
             attributes: [
               // position
               {
                 shaderLocation: 0,
                 format: "float32x3",
                 offset: 0,
+              },
+              // normal
+              {
+                shaderLocation: 1,
+                format: "float32x3",
+                offset: 3 * 4,
               },
             ],
           },
@@ -208,7 +214,7 @@ class Renderer {
             attributes: [
               // offset
               {
-                shaderLocation: 1,
+                shaderLocation: 2,
                 format: "float32x3",
                 offset: 0,
               },
