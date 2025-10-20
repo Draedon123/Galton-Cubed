@@ -1,0 +1,26 @@
+{
+  "name": "galton-cubed",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src",
+    "format": "prettier -w src",
+    "deploy": "git subtree push --prefix build origin gh-pages"
+  },
+  "devDependencies": {
+    "@types/eslint": "^9.6.1",
+    "@types/node": "^24.1.0",
+    "@webgpu/types": "^0.1.64",
+    "eslint": "^9.32.0",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "terser": "^5.43.1",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vite": "^7.0.4"
+  }
+}
