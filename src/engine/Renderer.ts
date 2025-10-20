@@ -36,8 +36,8 @@ class Renderer {
 
   private renderBindGroup!: GPUBindGroup;
   private renderPipeline!: GPURenderPipeline;
-  private cubeVertexBuffer!: GPUBuffer;
-  private cubeBufferLayout!: GPUVertexBufferLayout;
+  private vertexBuffer!: GPUBuffer;
+  private objectPositions!: GPUBuffer;
   private depthTexture!: GPUTexture;
 
   private readonly perspectiveViewMatrix: Matrix4Buffer;
@@ -151,24 +151,23 @@ class Renderer {
 
     this.depthTexture = this.createDepthTexture();
 
-    this.cubeBufferLayout = {
-      arrayStride: 3 * 4,
-      attributes: [
-        // position
-        {
-          format: "float32x3",
-          offset: 0,
-          shaderLocation: 0,
-        },
-      ],
-    };
-
-    this.cubeVertexBuffer = this.device.createBuffer({
+    this.vertexBuffer = this.device.createBuffer({
       label: "Cube Buffer",
       size: 1 * vertices.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
-    this.device.queue.writeBuffer(this.cubeVertexBuffer, 0, vertices);
+    this.device.queue.writeBuffer(this.vertexBuffer, 0, vertices);
+
+    this.objectPositions = this.device.createBuffer({
+      label: "Cube Buffer",
+      size: 2 * 4 * 3,
+      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    });
+    this.device.queue.writeBuffer(
+      this.objectPositions,
+      0,
+      new Float32Array([0, 0, 0, 3, 0, 0])
+    );
 
     const renderBindGroupLayout = this.device.createBindGroupLayout({
       label: "Cube Bind Group Layout",
@@ -202,7 +201,31 @@ class Renderer {
       layout: pipelineLayout,
       vertex: {
         module: shader.shader,
-        buffers: [this.cubeBufferLayout],
+        buffers: [
+          {
+            arrayStride: 3 * 4,
+            attributes: [
+              // position
+              {
+                shaderLocation: 0,
+                format: "float32x3",
+                offset: 0,
+              },
+            ],
+          },
+          {
+            arrayStride: 3 * 4,
+            stepMode: "instance",
+            attributes: [
+              // offset
+              {
+                shaderLocation: 1,
+                format: "float32x3",
+                offset: 0,
+              },
+            ],
+          },
+        ],
       },
       fragment: {
         module: shader.shader,
@@ -248,10 +271,11 @@ class Renderer {
       },
     });
 
-    renderPass.setVertexBuffer(0, this.cubeVertexBuffer);
+    renderPass.setVertexBuffer(0, this.vertexBuffer);
+    renderPass.setVertexBuffer(1, this.objectPositions);
     renderPass.setBindGroup(0, this.renderBindGroup);
     renderPass.setPipeline(this.renderPipeline);
-    renderPass.draw(vertices.length / 3);
+    renderPass.draw(vertices.length / 3, 2);
 
     renderPass.end();
     this.device.queue.submit([commandEncoder.finish()]);
