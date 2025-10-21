@@ -24,6 +24,7 @@ async function main(): Promise<void> {
   });
 
   await renderer.initialise();
+  await board.initialise(renderer.device);
 
   renderer.camera.position = new Vector3(0, -25, 100);
   renderer.camera.fovDegrees = 60;
@@ -34,6 +35,7 @@ async function main(): Promise<void> {
 
   loop.addCallback((frame) => {
     renderer.camera.checkKeyboardInputs(frame.deltaTime);
+    board.tick(frame.deltaTime);
     renderer.render();
   });
 

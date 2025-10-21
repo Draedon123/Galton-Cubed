@@ -19,8 +19,8 @@ class Renderer {
   public readonly camera: Camera;
   public readonly settings: Omit<RendererSettings, "cameraOptions" | "scene">;
   public readonly ballScene: BallScene;
+  public readonly device: GPUDevice;
 
-  private readonly device: GPUDevice;
   private readonly ctx: GPUCanvasContext;
   private readonly canvasFormat: GPUTextureFormat;
   private readonly gpuTimer: GPUTimer;

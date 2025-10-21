@@ -1,3 +1,5 @@
+#!import balls
+
 struct Vertex {
   @location(0) position: vec3f,
   @location(1) normal: vec3f,
@@ -8,16 +10,6 @@ struct VertexOutput {
   @builtin(position) position: vec4f,
   @location(0) normal: vec3f,
   @location(1) colour: vec3f,
-}
-
-struct Balls {
-  @align(16) count: u32,
-  balls: array<Ball>,
-}
-
-struct Ball {
-  modelMatrix: mat4x4f,
-  @align(16) colour: vec3f,
 }
 
 @group(0) @binding(0) var <uniform> perspectiveViewMatrix: mat4x4f;
