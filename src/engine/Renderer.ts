@@ -216,7 +216,7 @@ class Renderer {
         ],
       },
       primitive: {
-        // cullMode: "front",
+        cullMode: "front",
         // topology: "line-list",
       },
       depthStencil: {

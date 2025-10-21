@@ -4,11 +4,14 @@ import type { Model } from "./meshes/Model";
 import { Sphere } from "./meshes/Sphere";
 
 class BallScene {
-  public sceneBuffer!: GPUBuffer;
   public readonly mesh: Sphere;
+
+  public sceneBuffer!: GPUBuffer;
   public objects: Model[];
+
   private initialised: boolean;
   private device!: GPUDevice;
+
   private readonly maxObjects: number;
   constructor(maxObjects: number) {
     this.initialised = false;

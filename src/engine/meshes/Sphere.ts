@@ -25,8 +25,13 @@ class Sphere extends Mesh {
         radius
       );
 
-      vertices.push(...face.vertices);
-      indices.push(...face.indices);
+      for (const vertex of face.vertices) {
+        vertices.push(vertex);
+      }
+
+      for (const index of face.indices) {
+        indices.push(index);
+      }
     }
 
     super(vertices, indices);
