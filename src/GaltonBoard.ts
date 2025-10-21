@@ -1,4 +1,4 @@
-import type { BallScene } from "./engine/BallScene";
+import { BallScene } from "./engine/BallScene";
 import { Model } from "./engine/meshes/Model";
 import { hsvToRgb } from "./utils/hsvToRgb";
 import { Vector3 } from "./utils/Vector3";
@@ -8,10 +8,14 @@ type GaltonBoardOptions = {
   height: number;
   sideLength: number;
   pegRadius: number;
+  ballCount: number;
 };
 
 class GaltonBoard {
-  constructor(scene: BallScene, options: Partial<GaltonBoardOptions> = {}) {
+  public readonly scene: BallScene;
+  public readonly ballCount: number;
+  private readonly pegCount: number;
+  constructor(options: Partial<GaltonBoardOptions> = {}) {
     const pegs = this.createPegs(
       options.layers ?? 5,
       options.height ?? 50,
@@ -19,8 +23,11 @@ class GaltonBoard {
       options.pegRadius ?? 4
     );
 
-    scene.objects.push(...pegs);
-    scene.update();
+    this.ballCount = options.ballCount ?? 100;
+    this.pegCount = pegs.length;
+
+    this.scene = new BallScene(this.pegCount + this.ballCount);
+    this.scene.objects.push(...pegs);
   }
 
   private createPegs(

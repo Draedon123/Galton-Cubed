@@ -39,6 +39,14 @@ class Vector3 {
     );
   }
 
+  public subtract(vector3: Vector3): this {
+    this.components[0] -= vector3.components[0];
+    this.components[1] -= vector3.components[1];
+    this.components[2] -= vector3.components[2];
+
+    return this;
+  }
+
   public static scale(vector3: Vector3, scale: number): Vector3 {
     return new Vector3(
       vector3.components[0] * scale,

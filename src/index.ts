@@ -9,7 +9,14 @@ async function main(): Promise<void> {
   const canvas = document.getElementById("main") as HTMLCanvasElement;
   const frameTimeElement = document.getElementById("frameTime") as HTMLElement;
   const fpsElement = document.getElementById("fps") as HTMLElement;
+
+  const board = new GaltonBoard();
   const renderer = await Renderer.create(canvas, {
+    scene: board.scene,
+    cameraOptions: {
+      mouseSensitivity: 0.1,
+      movementSpeed: 0.1,
+    },
     timing: {
       frameTimeElement,
       fpsElement,
@@ -18,17 +25,15 @@ async function main(): Promise<void> {
 
   await renderer.initialise();
 
-  new GaltonBoard(renderer.ballScene);
-
-  renderer.camera.position = new Vector3(0.1, 70, 0.001);
+  renderer.camera.position = new Vector3(0, -25, 100);
   renderer.camera.fovDegrees = 60;
-  renderer.camera.lookAt = new Vector3(0.1, -20, 0);
 
   initialiseConfigPanel(renderer);
 
   const loop = new Loop();
 
-  loop.addCallback(() => {
+  loop.addCallback((frame) => {
+    renderer.camera.checkKeyboardInputs(frame.deltaTime);
     renderer.render();
   });
 

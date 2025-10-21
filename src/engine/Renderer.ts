@@ -6,7 +6,8 @@ import { Camera, type CameraOptions } from "./Camera";
 import { Shader } from "./Shader";
 
 type RendererSettings = {
-  cameraOptions?: Partial<CameraOptions>;
+  cameraOptions: Partial<CameraOptions>;
+  scene: BallScene;
   timing?: Partial<{
     frameTimeElement: HTMLElement;
     fpsElement: HTMLElement;
@@ -16,7 +17,7 @@ type RendererSettings = {
 class Renderer {
   public readonly canvas: HTMLCanvasElement;
   public readonly camera: Camera;
-  public readonly settings: Omit<RendererSettings, "cameraOptions">;
+  public readonly settings: Omit<RendererSettings, "cameraOptions" | "scene">;
   public readonly ballScene: BallScene;
 
   private readonly device: GPUDevice;
@@ -52,7 +53,7 @@ class Renderer {
     this.ctx = ctx;
     this.canvasFormat = "rgba8unorm";
     this.camera = new Camera(settings.cameraOptions);
-    this.ballScene = new BallScene(100);
+    this.ballScene = settings.scene ?? new BallScene(100);
     this.perspectiveViewMatrix = new Matrix4Buffer(
       device,
       "Perspective View Matrix"
@@ -99,6 +100,7 @@ class Renderer {
     }
 
     this.ballScene.initialise(this.device);
+    this.ballScene.update();
 
     await this.initialiseRendering();
 
