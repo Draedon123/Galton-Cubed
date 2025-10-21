@@ -1,0 +1,67 @@
+import { BufferWriter } from "../utils/BufferWriter";
+import type { Camera } from "./Camera";
+import type { Model } from "./meshes/Model";
+import { Sphere } from "./meshes/Sphere";
+
+class BallScene {
+  public sceneBuffer!: GPUBuffer;
+  public readonly mesh: Sphere;
+  public objects: Model[];
+  private initialised: boolean;
+  private device!: GPUDevice;
+  private readonly maxObjects: number;
+  constructor(maxObjects: number) {
+    this.initialised = false;
+    this.maxObjects = maxObjects;
+    this.objects = [];
+    this.mesh = new Sphere(20, 2);
+  }
+
+  public initialise(device: GPUDevice): void {
+    if (this.initialised) {
+      return;
+    }
+
+    this.device = device;
+    this.mesh.initialise(device);
+
+    this.sceneBuffer = device.createBuffer({
+      label: "Ball Scene Buffer",
+      size: this.byteLength,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+
+    this.initialised = true;
+  }
+
+  public update(camera: Camera): void {
+    if (!this.initialised) {
+      return;
+    }
+
+    const viewMatrix = camera.getViewMatrix();
+    const bufferWriter = new BufferWriter(this.byteLength);
+
+    bufferWriter.writeFloat32(this.objects.length);
+    bufferWriter.pad(12);
+
+    for (const object of this.objects) {
+      const modelMatrix = object.calculateModelMatrix();
+      const normalMatrix = object.calculateNormalMatrix(
+        modelMatrix,
+        viewMatrix
+      );
+
+      bufferWriter.writeMat4x4f(modelMatrix);
+      bufferWriter.writeMat3x3f(normalMatrix);
+    }
+
+    this.device.queue.writeBuffer(this.sceneBuffer, 0, bufferWriter.buffer);
+  }
+
+  public get byteLength(): number {
+    return 16 + this.maxObjects * (16 + 9) * 4;
+  }
+}
+
+export { BallScene };

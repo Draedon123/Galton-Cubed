@@ -1,8 +1,8 @@
 import { GPUTimer } from "../utils/GPUTimer";
 import { Matrix4Buffer } from "../utils/Matrix4Buffer";
 import { resolveBasePath } from "../utils/resolveBasePath";
+import { BallScene } from "./BallScene";
 import { Camera, type CameraOptions } from "./Camera";
-import { Sphere } from "./meshes/Sphere";
 import { Shader } from "./Shader";
 
 type RendererSettings = {
@@ -13,12 +13,11 @@ type RendererSettings = {
   }>;
 };
 
-const sphere = new Sphere(20, 2);
-
 class Renderer {
   public readonly canvas: HTMLCanvasElement;
   public readonly camera: Camera;
   public readonly settings: Omit<RendererSettings, "cameraOptions">;
+  public readonly ballScene: BallScene;
 
   private readonly device: GPUDevice;
   private readonly ctx: GPUCanvasContext;
@@ -29,8 +28,6 @@ class Renderer {
 
   private renderBindGroup!: GPUBindGroup;
   private renderPipeline!: GPURenderPipeline;
-  private vertexBuffer!: GPUBuffer;
-  private objectPositions!: GPUBuffer;
   private depthTexture!: GPUTexture;
 
   private readonly perspectiveViewMatrix: Matrix4Buffer;
@@ -55,6 +52,7 @@ class Renderer {
     this.ctx = ctx;
     this.canvasFormat = "rgba8unorm";
     this.camera = new Camera(settings.cameraOptions);
+    this.ballScene = new BallScene(100);
     this.perspectiveViewMatrix = new Matrix4Buffer(
       device,
       "Perspective View Matrix"
@@ -100,7 +98,7 @@ class Renderer {
       return;
     }
 
-    sphere.initialise(this.device);
+    this.ballScene.initialise(this.device);
 
     await this.initialiseRendering();
 
@@ -145,18 +143,6 @@ class Renderer {
     );
 
     this.depthTexture = this.createDepthTexture();
-    this.vertexBuffer = sphere.vertexBuffer;
-
-    this.objectPositions = this.device.createBuffer({
-      label: "Positions Buffer",
-      size: 2 * 4 * 3,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    this.device.queue.writeBuffer(
-      this.objectPositions,
-      0,
-      new Float32Array([0, 0, 0, 3, 0, 0])
-    );
 
     const renderBindGroupLayout = this.device.createBindGroupLayout({
       label: "Cube Bind Group Layout",
@@ -164,6 +150,11 @@ class Renderer {
         {
           binding: 0,
           buffer: { type: "uniform" },
+          visibility: GPUShaderStage.VERTEX,
+        },
+        {
+          binding: 1,
+          buffer: { type: "read-only-storage" },
           visibility: GPUShaderStage.VERTEX,
         },
       ],
@@ -176,6 +167,10 @@ class Renderer {
         {
           binding: 0,
           resource: { buffer: this.perspectiveViewMatrix.buffer },
+        },
+        {
+          binding: 1,
+          resource: { buffer: this.ballScene.sceneBuffer },
         },
       ],
     });
@@ -208,18 +203,6 @@ class Renderer {
               },
             ],
           },
-          {
-            arrayStride: 3 * 4,
-            stepMode: "instance",
-            attributes: [
-              // offset
-              {
-                shaderLocation: 2,
-                format: "float32x3",
-                offset: 0,
-              },
-            ],
-          },
         ],
       },
       fragment: {
@@ -231,7 +214,7 @@ class Renderer {
         ],
       },
       primitive: {
-        cullMode: "front",
+        // cullMode: "front",
         // topology: "line-list",
       },
       depthStencil: {
@@ -267,12 +250,13 @@ class Renderer {
       },
     });
 
-    renderPass.setVertexBuffer(0, this.vertexBuffer);
-    renderPass.setVertexBuffer(1, this.objectPositions);
+    this.ballScene.mesh.bind(renderPass);
     renderPass.setBindGroup(0, this.renderBindGroup);
     renderPass.setPipeline(this.renderPipeline);
-
-    sphere.render(renderPass);
+    renderPass.drawIndexed(
+      this.ballScene.mesh.indexCount,
+      this.ballScene.objects.length
+    );
 
     renderPass.end();
     this.device.queue.submit([commandEncoder.finish()]);

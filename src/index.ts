@@ -3,6 +3,8 @@ import { Renderer } from "./engine/Renderer";
 import { Loop } from "./utils/Loop";
 import { initialiseConfigPanel } from "./configPanel";
 import { Vector3 } from "./utils/Vector3";
+import { Model } from "./engine/meshes/Model";
+import { Quaternion } from "./utils/Quaternion";
 
 async function main(): Promise<void> {
   const canvas = document.getElementById("main") as HTMLCanvasElement;
@@ -17,9 +19,19 @@ async function main(): Promise<void> {
 
   await renderer.initialise();
 
-  renderer.camera.position = new Vector3(4, 2.5, 2.5);
+  renderer.ballScene.objects.push(
+    new Model({
+      position: new Vector3(-0.5, -0.5, -0.5),
+      rotation: Quaternion.fromEulerAngles(0, 180, 0),
+      scale: new Vector3(0.5, 0.5, 0.5),
+    })
+  );
+
+  renderer.camera.position = new Vector3(3, 3, 3);
   renderer.camera.fovDegrees = 60;
   renderer.camera.lookAt = new Vector3(0, 0, 0);
+
+  renderer.ballScene.update(renderer.camera);
 
   initialiseConfigPanel(renderer);
 

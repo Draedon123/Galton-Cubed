@@ -8,7 +8,10 @@ class Quaternion {
     this.components = new Float32Array([x, y, z, w]);
   }
 
+  /** degrees */
   public getEulerAngles(): [number, number, number] {
+    this.normalise();
+
     const matrix = this.toRotationMatrix();
     let x: number;
     let z: number;
@@ -22,36 +25,32 @@ class Quaternion {
       z = Math.atan2(-matrix.components[4], matrix.components[5]);
     }
 
-    return [x, y, z];
+    return [degrees(x), degrees(y), degrees(z)];
   }
 
   /** pitch, degrees */
   public get eulerX(): number {
-    return degrees(this.getEulerAngles()[0]);
+    return this.getEulerAngles()[0];
   }
 
   /** yaw, degrees */
   public get eulerY(): number {
-    return degrees(this.getEulerAngles()[1]);
+    return this.getEulerAngles()[1];
   }
 
   /** roll, degrees */
   public get eulerZ(): number {
-    return degrees(this.getEulerAngles()[2]);
+    return this.getEulerAngles()[2];
   }
 
   public set eulerX(degrees: number) {
     const euler = this.getEulerAngles();
-    this.copyFrom(
-      Quaternion.fromEulerAngles(radians(degrees), euler[1], euler[2])
-    );
+    this.copyFrom(Quaternion.fromEulerAngles(degrees, euler[1], euler[2]));
   }
 
   public set eulerY(degrees: number) {
     const euler = this.getEulerAngles();
-    this.copyFrom(
-      Quaternion.fromEulerAngles(euler[0], radians(degrees), euler[2])
-    );
+    this.copyFrom(Quaternion.fromEulerAngles(euler[0], degrees, euler[2]));
   }
 
   public set eulerZ(degrees: number) {
@@ -92,8 +91,12 @@ class Quaternion {
     return this;
   }
 
-  /** radians */
+  /** degrees */
   public static fromEulerAngles(x: number, y: number, z: number): Quaternion {
+    x = radians(x);
+    y = radians(y);
+    z = radians(z);
+
     const sinX = Math.sin(x / 2);
     const cosX = Math.cos(x / 2);
     const sinY = Math.sin(y / 2);

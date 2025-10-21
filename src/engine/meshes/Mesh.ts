@@ -39,7 +39,7 @@ class Mesh {
         .flat()
     );
 
-    if (this.rawIndices) {
+    if (this.rawIndices !== null) {
       this.indices = new (
         this.indexFormat === "uint16" ? Uint16Array : Uint32Array
       )(this.rawIndices);
@@ -64,18 +64,26 @@ class Mesh {
   }
 
   public render(renderPass: GPURenderPassEncoder): void {
-    renderPass.setVertexBuffer(0, this.vertexBuffer);
+    if (this.indexBuffer !== null) {
+      renderPass.drawIndexed(this.indexCount);
+    } else {
+      renderPass.draw(this.rawVertices.length);
+    }
+  }
+
+  public bind(
+    renderPass: GPURenderPassEncoder,
+    vertexBufferSlot: number = 0
+  ): void {
+    renderPass.setVertexBuffer(vertexBufferSlot, this.vertexBuffer);
 
     if (this.indexBuffer !== null) {
       renderPass.setIndexBuffer(this.indexBuffer, this.indexFormat);
-      renderPass.drawIndexed(this.indexCount);
-    } else {
-      renderPass.draw(this.vertices.length / 3);
     }
   }
 
   public get verticeCount(): number {
-    return this.vertices.length / 3;
+    return this.rawVertices.length;
   }
 
   public get indexCount(): number {

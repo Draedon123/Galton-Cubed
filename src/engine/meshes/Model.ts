@@ -1,7 +1,7 @@
-import type { Matrix4 } from "../../utils/Matrix4";
+import { Matrix3 } from "../../utils/Matrix3";
+import { Matrix4 } from "../../utils/Matrix4";
 import { Quaternion } from "../../utils/Quaternion";
 import { Vector3 } from "../../utils/Vector3";
-import type { Mesh } from "./Mesh";
 
 type Transform = {
   position: Vector3;
@@ -10,14 +10,11 @@ type Transform = {
 };
 
 class Model {
-  public mesh: Mesh;
   public position: Vector3;
   public rotation: Quaternion;
   public scale: Vector3;
 
-  constructor(mesh: Mesh, transforms: Partial<Transform> = {}) {
-    this.mesh = mesh;
-
+  constructor(transforms: Partial<Transform> = {}) {
     this.position = transforms.position ?? new Vector3();
     this.rotation = transforms.rotation ?? new Quaternion();
     this.scale = transforms.scale ?? new Vector3(1, 1, 1);
@@ -41,6 +38,15 @@ class Model {
     modelMatrix.components[14] = this.position.z;
 
     return modelMatrix;
+  }
+
+  public calculateNormalMatrix(
+    modelMatrix: Matrix4,
+    viewMatrix: Matrix4
+  ): Matrix3 {
+    return Matrix3.fromMatrix4(
+      Matrix4.multiplyMatrices(modelMatrix, viewMatrix).invert()
+    ).transpose();
   }
 }
 

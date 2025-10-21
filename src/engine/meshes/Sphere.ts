@@ -45,7 +45,10 @@ class Sphere extends Mesh {
       2 * radius
     );
     const v = Vector3.cross(direction, u);
-    const corner = Vector3.subtract(direction, Vector3.add(u, v).scale(0.5));
+    const corner = Vector3.subtract(
+      Vector3.scale(direction, 0.5 * radius),
+      Vector3.add(u, v).scale(0.5)
+    );
 
     const du = Vector3.scale(u, 1 / resolution);
     const dv = Vector3.scale(v, 1 / resolution);
