@@ -62,7 +62,7 @@ class BallPhysicsShader {
     // initialise to 0
     this.ballStatesBuffer = device.createBuffer({
       label: "Ball Physics Shader Ball States Buffer",
-      size: board.ballCount * 8 * 4,
+      size: board.maxBallCount * 8 * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 

@@ -16,50 +16,45 @@ type GaltonBoardOptions = {
 
 class GaltonBoard {
   public readonly scene: BallScene;
-  public readonly ballCount: number;
+  public readonly maxBallCount: number;
   public readonly pegCount: number;
   public readonly ballRadius: number;
   public readonly pegRadius: number;
+
+  private readonly start: Vector3;
 
   private initialised: boolean;
   private ballPhysicsShader!: BallPhysicsShader;
   constructor(options: Partial<GaltonBoardOptions> = {}) {
     this.initialised = false;
-    this.ballCount = options.ballCount ?? 100;
+    this.maxBallCount = options.ballCount ?? 100;
     this.pegRadius = options.pegRadius ?? 4;
     this.ballRadius = options.ballRadius ?? 1;
 
-    const start = options.start ?? new Vector3(0, 0, 0);
+    this.start = options.start ?? new Vector3(0, 0, 0);
     const pegs = this.createPegs(
       options.layers ?? 5,
       options.height ?? 50,
-      options.sideLength ?? 100,
-      start
-    );
-
-    const balls = this.createBalls(
-      this.ballCount,
-      Vector3.add(start, new Vector3(0, 10, 0))
+      options.sideLength ?? 100
     );
 
     this.pegCount = pegs.length;
 
-    this.scene = new BallScene(this.pegCount + this.ballCount);
+    this.scene = new BallScene(this.pegCount + this.maxBallCount);
 
     for (const peg of pegs) {
       this.scene.objects.push(peg);
     }
+  }
 
-    for (const ball of balls) {
-      this.scene.objects.push(ball);
-    }
+  public get ballCount(): number {
+    return this.scene.objects.length - this.pegCount;
   }
 
   private createPegs(
     layers: number,
     height: number,
-    sideLength: number,
-    start: Vector3
+    sideLength: number
   ): Model[] {
     const pegs: Model[] = [];
 
@@ -67,10 +62,10 @@ class GaltonBoard {
     const ds = sideLength / layers;
 
     for (let y = 0; y < layers; y++) {
-      const positionY = start.y - y * dy;
+      const positionY = this.start.y - y * dy;
       const offsets = (layers - y) / 2;
       const corner = Vector3.add(
-        start,
+        this.start,
         new Vector3(-sideLength / 2, positionY, -sideLength / 2)
       ).add(new Vector3(offsets * ds, 0, offsets * ds));
 
@@ -100,26 +95,26 @@ class GaltonBoard {
     return pegs;
   }
 
-  private createBalls(ballCount: number, start: Vector3): Model[] {
-    const SPACING = this.ballRadius * 4;
-    const balls: Model[] = [];
+  public *createBalls(): Generator<void> {
+    const verticalOffset = this.pegRadius * 5;
 
-    for (let i = 1; i <= ballCount; i++) {
-      const xOffset = 0.2 * this.ballRadius * (Math.random() - 0.5);
-      const zOffset = 0.2 * this.ballRadius * (Math.random() - 0.5);
+    for (let i = 0; i < this.maxBallCount; i++) {
+      const xOffset = 1 * this.ballRadius * (Math.random() - 0.5);
+      const zOffset = 1 * this.ballRadius * (Math.random() - 0.5);
 
-      balls.push(
+      this.scene.objects.push(
         new Model({
           position: Vector3.add(
-            start,
-            new Vector3(xOffset, SPACING * i, zOffset)
+            this.start,
+            new Vector3(xOffset, verticalOffset, zOffset)
           ),
           scale: new Vector3(this.ballRadius, this.ballRadius, this.ballRadius),
         })
       );
-    }
 
-    return balls;
+      this.scene.update(1);
+      yield;
+    }
   }
 
   public tick(deltaTimeMs: number): void {

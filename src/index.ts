@@ -29,7 +29,14 @@ async function main(): Promise<void> {
 
   const loop = new Loop({ wormholeThreshold: 100 });
 
+  const generator = board.createBalls();
+  let result = generator.next();
+
   loop.addCallback((frame) => {
+    if (!result.done && frame.frame % 10 === 9) {
+      result = generator.next();
+    }
+
     renderer.camera.checkKeyboardInputs(frame.deltaTime);
     board.tick(frame.deltaTime);
     renderer.render();

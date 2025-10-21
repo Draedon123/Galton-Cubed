@@ -4,6 +4,8 @@ type LoopSettings = {
 type FrameData = {
   deltaTime: number;
   totalTime: number;
+  /** first frame is 1 */
+  frame: number;
 };
 type LoopCallback = (frameData: FrameData) => unknown;
 
@@ -13,10 +15,12 @@ class Loop {
   private frameID: number | null;
   private lastFrameTime: number;
   private totalTime: number;
+  private frame: number;
   constructor(settings: Partial<LoopSettings> = {}) {
     this.frameID = null;
     this.lastFrameTime = 0;
     this.totalTime = 0;
+    this.frame = 1;
     this.callbacks = [];
 
     this.settings = {
@@ -29,6 +33,7 @@ class Loop {
       return;
     }
 
+    this.frame = 1;
     this.totalTime = 0;
     this.lastFrameTime = -1;
     this.frameID = requestAnimationFrame(this.tick.bind(this));
@@ -67,6 +72,7 @@ class Loop {
       const frameData: FrameData = {
         deltaTime: deltaTimeMS,
         totalTime: totalTimeMS,
+        frame: this.frame++,
       };
 
       for (const callback of this.callbacks) {

@@ -37,17 +37,25 @@ class BallScene {
     this.initialised = true;
   }
 
-  public update(): void {
+  public update(lastObjects: number = this.objects.length): void {
     if (!this.initialised) {
       return;
     }
 
-    const bufferWriter = new BufferWriter(this.byteLength);
+    this.device.queue.writeBuffer(
+      this.sceneBuffer,
+      0,
+      new Uint32Array([this.objects.length, 0, 0, 0])
+    );
 
-    bufferWriter.writeUint32(this.objects.length);
-    bufferWriter.pad(12);
+    const bufferWriter = new BufferWriter(lastObjects * this.ballByteLength);
 
-    for (const object of this.objects) {
+    for (
+      let i = this.objects.length - lastObjects;
+      i < this.objects.length;
+      i++
+    ) {
+      const object = this.objects[i];
       const modelMatrix = object.calculateModelMatrix();
 
       bufferWriter.writeMat4x4f(modelMatrix);
@@ -55,11 +63,21 @@ class BallScene {
       bufferWriter.pad(4);
     }
 
-    this.device.queue.writeBuffer(this.sceneBuffer, 0, bufferWriter.buffer);
+    this.device.queue.writeBuffer(
+      this.sceneBuffer,
+      16 + (this.objects.length - lastObjects) * this.ballByteLength,
+      bufferWriter.buffer,
+      0,
+      lastObjects * this.ballByteLength
+    );
   }
 
   public get byteLength(): number {
-    return 16 + this.maxObjects * (16 + 4) * 4;
+    return 16 + this.maxObjects * this.ballByteLength;
+  }
+
+  public get ballByteLength(): number {
+    return (16 + 4) * 4;
   }
 }
 
