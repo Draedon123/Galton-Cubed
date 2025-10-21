@@ -46,10 +46,8 @@ class BallScene {
 
     for (const object of this.objects) {
       const modelMatrix = object.calculateModelMatrix();
-      const normalMatrix = object.calculateNormalMatrix(modelMatrix);
 
       bufferWriter.writeMat4x4f(modelMatrix);
-      bufferWriter.writeMat3x3f(normalMatrix);
       bufferWriter.writeVec3f(Vector3.scale(object.colour, 1 / 255));
       bufferWriter.pad(4);
     }
@@ -58,7 +56,7 @@ class BallScene {
   }
 
   public get byteLength(): number {
-    return 16 + this.maxObjects * (16 + 9 + 4) * 4;
+    return 16 + this.maxObjects * (16 + 4) * 4;
   }
 }
 

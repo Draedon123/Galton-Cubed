@@ -17,7 +17,6 @@ struct Balls {
 
 struct Ball {
   modelMatrix: mat4x4f,
-  normalMatrix: mat3x3f,
   @align(16) colour: vec3f,
 }
 
@@ -34,7 +33,7 @@ fn vertexMain(vertex: Vertex) -> VertexOutput {
 
   let ball = balls.balls[vertex.index];
   output.position = perspectiveViewMatrix * ball.modelMatrix * vec4f(vertex.position, 1.0);
-  output.normal = normalize(ball.normalMatrix * vertex.normal);
+  output.normal = vertex.normal;
   output.colour = ball.colour;
 
   return output;
