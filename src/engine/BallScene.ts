@@ -1,5 +1,4 @@
 import { BufferWriter } from "../utils/BufferWriter";
-import type { Camera } from "./Camera";
 import type { Model } from "./meshes/Model";
 import { Sphere } from "./meshes/Sphere";
 
@@ -14,7 +13,7 @@ class BallScene {
     this.initialised = false;
     this.maxObjects = maxObjects;
     this.objects = [];
-    this.mesh = new Sphere(20, 2);
+    this.mesh = new Sphere(30, 2);
   }
 
   public initialise(device: GPUDevice): void {
@@ -34,12 +33,11 @@ class BallScene {
     this.initialised = true;
   }
 
-  public update(camera: Camera): void {
+  public update(): void {
     if (!this.initialised) {
       return;
     }
 
-    const viewMatrix = camera.getViewMatrix();
     const bufferWriter = new BufferWriter(this.byteLength);
 
     bufferWriter.writeFloat32(this.objects.length);
@@ -47,10 +45,7 @@ class BallScene {
 
     for (const object of this.objects) {
       const modelMatrix = object.calculateModelMatrix();
-      const normalMatrix = object.calculateNormalMatrix(
-        modelMatrix,
-        viewMatrix
-      );
+      const normalMatrix = object.calculateNormalMatrix(modelMatrix);
 
       bufferWriter.writeMat4x4f(modelMatrix);
       bufferWriter.writeMat3x3f(normalMatrix);

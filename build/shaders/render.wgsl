@@ -44,4 +44,5 @@ fn fragmentMain(vertex: VertexOutput) -> @location(0) vec4f {
   let ambient: vec3f = AMBIENT_STRENGTH * AMBIENT_COLOUR;
 
   return vec4f(diffuse + ambient, 1.0);
+  // return vec4f((vertex.normal + 1.0) / 2.0, 1.0);
 }

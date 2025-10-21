@@ -40,12 +40,9 @@ class Model {
     return modelMatrix;
   }
 
-  public calculateNormalMatrix(
-    modelMatrix: Matrix4,
-    viewMatrix: Matrix4
-  ): Matrix3 {
+  public calculateNormalMatrix(modelMatrix: Matrix4): Matrix3 {
     return Matrix3.fromMatrix4(
-      Matrix4.multiplyMatrices(modelMatrix, viewMatrix).invert()
+      new Matrix4().copyFrom(modelMatrix).invert()
     ).transpose();
   }
 }

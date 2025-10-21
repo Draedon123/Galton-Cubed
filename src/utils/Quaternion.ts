@@ -28,24 +28,24 @@ class Quaternion {
     return [degrees(x), degrees(y), degrees(z)];
   }
 
-  /** pitch, degrees */
+  /** pitch, degrees. for incrementing angle instead of setting, use `rotateX` instead to avoid gimbal lock */
   public get eulerX(): number {
     return this.getEulerAngles()[0];
   }
 
-  /** yaw, degrees */
+  /** yaw, degrees. for incrementing angle instead of setting, use `rotateY` instead to avoid gimbal lock */
   public get eulerY(): number {
     return this.getEulerAngles()[1];
   }
 
-  /** roll, degrees */
+  /** roll, degrees. for incrementing angle instead of setting, use `rotateZ` instead to avoid gimbal lock */
   public get eulerZ(): number {
     return this.getEulerAngles()[2];
   }
 
   public set eulerX(degrees: number) {
     const euler = this.getEulerAngles();
-    this.copyFrom(Quaternion.fromEulerAngles(degrees, euler[1], euler[2]));
+    this.multiply(Quaternion.fromEulerAngles(degrees, euler[1], euler[2]));
   }
 
   public set eulerY(degrees: number) {
@@ -55,12 +55,40 @@ class Quaternion {
 
   public set eulerZ(degrees: number) {
     const euler = this.getEulerAngles();
-    this.copyFrom(
-      Quaternion.fromEulerAngles(euler[0], euler[1], radians(degrees))
-    );
+    this.copyFrom(Quaternion.fromEulerAngles(euler[0], euler[1], degrees));
   }
 
-  /** 3x3 matrix */
+  public rotateX(degrees: number) {
+    this.multiply(Quaternion.fromEulerAngles(degrees, 0, 0));
+  }
+
+  public rotateY(degrees: number) {
+    this.multiply(Quaternion.fromEulerAngles(0, degrees, 0));
+  }
+
+  public rotateZ(degrees: number) {
+    this.multiply(Quaternion.fromEulerAngles(0, 0, degrees));
+  }
+
+  public multiply(quaternion: Quaternion): this {
+    const ax = this.x;
+    const ay = this.y;
+    const az = this.z;
+    const aw = this.w;
+
+    const bx = quaternion.x;
+    const by = quaternion.y;
+    const bz = quaternion.z;
+    const bw = quaternion.w;
+
+    this.x = aw * bx + ax * bw + ay * bz - az * by;
+    this.y = aw * by - ax * bz + ay * bw + az * bx;
+    this.z = aw * bz + ax * by - ay * bx + az * bw;
+    this.w = aw * bw - ax * bx - ay * by - az * bz;
+
+    return this;
+  }
+
   public toRotationMatrix(): Matrix4 {
     const x = this.x;
     const y = this.y;
@@ -69,7 +97,7 @@ class Quaternion {
 
     const matrix = new Matrix4();
 
-    matrix.components[0] = 1 - 2 * (y * y + z + z);
+    matrix.components[0] = 1 - 2 * (y * y + z * z);
     matrix.components[1] = 2 * (x * y + z * w);
     matrix.components[2] = 2 * (x * z - y * w);
     matrix.components[4] = 2 * (x * y - z * w);

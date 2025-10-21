@@ -19,25 +19,32 @@ async function main(): Promise<void> {
 
   await renderer.initialise();
 
-  renderer.ballScene.objects.push(
-    new Model({
-      position: new Vector3(-0.5, -0.5, -0.5),
-      rotation: Quaternion.fromEulerAngles(0, 180, 0),
-      scale: new Vector3(0.5, 0.5, 0.5),
-    })
-  );
+  const ball1 = new Model({
+    position: new Vector3(-2.5, -0.5, -0.5),
+    rotation: Quaternion.fromEulerAngles(0, 0, 0),
+    scale: new Vector3(1.2, 1.2, 1.2),
+  });
+
+  const ball2 = new Model({
+    position: new Vector3(2.5, -0.5, -0.5),
+    rotation: Quaternion.fromEulerAngles(0, 0, 0),
+    scale: new Vector3(0.5, 0.5, 0.5),
+  });
+  renderer.ballScene.objects.push(ball1, ball2);
 
   renderer.camera.position = new Vector3(3, 3, 3);
   renderer.camera.fovDegrees = 60;
   renderer.camera.lookAt = new Vector3(0, 0, 0);
-
-  renderer.ballScene.update(renderer.camera);
 
   initialiseConfigPanel(renderer);
 
   const loop = new Loop();
 
   loop.addCallback(() => {
+    ball1.rotation.rotateX(0.5);
+    ball1.rotation.rotateY(1);
+    ball1.rotation.rotateZ(2);
+    renderer.ballScene.update();
     renderer.render();
   });
 
