@@ -27,16 +27,12 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
   let deltaTime: f32 = settings.deltaTimeMs / 1000.0;
   var position: vec3f = extractPosition(&balls.balls[index + settings.pegCount].modelMatrix);
 
-  for(var i: u32 = 0; i < balls.count ; i++){
-    if(i == index + settings.pegCount){
-      continue;
-    }
-
+  for(var i: u32 = 0; i < settings.pegCount; i++){
     let pegPosition: vec3f = extractPosition(&balls.balls[i].modelMatrix);
     let toPeg: vec3f = pegPosition - position;
     let distanceBetweenCentres: f32 = length(toPeg);
 
-    if(distanceBetweenCentres - select(settings.pegRadius, settings.ballRadius, i >= settings.pegCount) - settings.ballRadius < 1e-2){
+    if(distanceBetweenCentres - settings.pegRadius - settings.ballRadius < 1e-2){
       ballStates[index].velocity = -0.9 * normalize(toPeg) * length(ballStates[index].velocity);
 
       break;

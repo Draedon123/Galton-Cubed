@@ -7,8 +7,6 @@ import { GaltonBoard } from "./GaltonBoard";
 
 async function main(): Promise<void> {
   const canvas = document.getElementById("main") as HTMLCanvasElement;
-  const frameTimeElement = document.getElementById("frameTime") as HTMLElement;
-  const fpsElement = document.getElementById("fps") as HTMLElement;
 
   const board = new GaltonBoard({
     ballCount: 100,
@@ -18,10 +16,6 @@ async function main(): Promise<void> {
     cameraOptions: {
       mouseSensitivity: 0.1,
       movementSpeed: 0.1,
-    },
-    timing: {
-      frameTimeElement,
-      fpsElement,
     },
   });
 
@@ -33,7 +27,7 @@ async function main(): Promise<void> {
 
   initialiseConfigPanel(renderer);
 
-  const loop = new Loop();
+  const loop = new Loop({ wormholeThreshold: 100 });
 
   loop.addCallback((frame) => {
     renderer.camera.checkKeyboardInputs(frame.deltaTime);

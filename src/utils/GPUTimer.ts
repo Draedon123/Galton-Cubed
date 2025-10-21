@@ -3,8 +3,6 @@ import { RollingAverage } from "./RollingAverage";
 type GPUTimerOnUpdate = (time: number) => unknown;
 
 class GPUTimer {
-  private static readonly modifiedDevices: Set<GPUDevice> = new Set();
-
   public readonly canTimestamp: boolean;
 
   private readonly querySet!: GPUQuerySet;
@@ -40,50 +38,63 @@ class GPUTimer {
       });
     }
 
-    if (!GPUTimer.modifiedDevices.has(device)) {
-      const originalSubmitMethod = device.queue.submit.bind(device.queue);
-      device.queue.submit = (commandBuffers: Iterable<GPUCommandBuffer>) => {
-        originalSubmitMethod(commandBuffers);
+    const originalSubmitMethod = device.queue.submit.bind(device.queue);
+    device.queue.submit = (commandBuffers: Iterable<GPUCommandBuffer>) => {
+      originalSubmitMethod(commandBuffers);
 
-        if (!this.canTimestamp || this.resultBuffer.mapState !== "unmapped") {
-          return;
-        }
+      if (!this.canTimestamp || this.resultBuffer.mapState !== "unmapped") {
+        return;
+      }
 
-        this.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-          const times = new BigInt64Array(this.resultBuffer.getMappedRange());
+      this.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
+        const times = new BigInt64Array(this.resultBuffer.getMappedRange());
 
-          this.rollingAverage.addSample(Number(times[1] - times[0]));
-          this.resultBuffer.unmap();
+        this.rollingAverage.addSample(Number(times[1] - times[0]));
+        this.resultBuffer.unmap();
 
-          this.onUpdate(this.rollingAverage.average);
-        });
-      };
-
-      GPUTimer.modifiedDevices.add(device);
-    }
+        this.onUpdate(this.rollingAverage.average);
+      });
+    };
   }
 
   public get time(): number {
     return this.rollingAverage.average;
   }
 
-  public beginComputePass(
+  public beginPass(
     commandEncoder: GPUCommandEncoder,
+    passType: "render",
+    descriptor?: Omit<GPURenderPassDescriptor, "timestampWrites">
+  ): GPURenderPassEncoder;
+  public beginPass(
+    commandEncoder: GPUCommandEncoder,
+    passType: "compute",
     descriptor?: Omit<GPUComputePassDescriptor, "timestampWrites">
-  ): GPUComputePassEncoder {
+  ): GPUComputePassEncoder;
+  public beginPass(
+    commandEncoder: GPUCommandEncoder,
+    passType: "render" | "compute",
+    descriptor?: Omit<
+      GPUComputePassDescriptor | GPURenderPassDescriptor,
+      "timestampWrites"
+    >
+  ): GPUComputePassEncoder | GPURenderPassEncoder {
     const timestampWrites: GPUComputePassTimestampWrites = {
       querySet: this.querySet,
       beginningOfPassWriteIndex: 0,
       endOfPassWriteIndex: 1,
     };
 
-    const computePass = commandEncoder.beginComputePass({
+    const pass = commandEncoder[
+      passType === "render" ? "beginRenderPass" : "beginComputePass"
+      // @ts-expect-error idk how to fix the type error but i swear it's type safe
+    ]({
       ...descriptor,
       ...(this.canTimestamp ? { timestampWrites } : undefined),
     });
 
-    const originalEndMethod = computePass.end.bind(computePass);
-    computePass.end = () => {
+    const originalEndMethod = pass.end.bind(pass);
+    pass.end = () => {
       originalEndMethod();
 
       if (!this.canTimestamp) {
@@ -106,49 +117,21 @@ class GPUTimer {
       }
     };
 
-    return computePass;
+    return pass;
+  }
+
+  public beginComputePass(
+    commandEncoder: GPUCommandEncoder,
+    descriptor?: Omit<GPUComputePassDescriptor, "timestampWrites">
+  ): GPUComputePassEncoder {
+    return this.beginPass(commandEncoder, "compute", descriptor);
   }
 
   public beginRenderPass(
     commandEncoder: GPUCommandEncoder,
     descriptor: Omit<GPURenderPassDescriptor, "timestampWrites">
   ): GPURenderPassEncoder {
-    const timestampWrites: GPUComputePassTimestampWrites = {
-      querySet: this.querySet,
-      beginningOfPassWriteIndex: 0,
-      endOfPassWriteIndex: 1,
-    };
-
-    const renderPass = commandEncoder.beginRenderPass({
-      ...descriptor,
-      ...(this.canTimestamp ? { timestampWrites } : undefined),
-    });
-
-    const originalEndMethod = renderPass.end.bind(renderPass);
-    renderPass.end = () => {
-      originalEndMethod();
-
-      if (!this.canTimestamp) {
-        return;
-      }
-
-      commandEncoder.resolveQuerySet(
-        this.querySet,
-        0,
-        this.querySet.count,
-        this.resolveBuffer,
-        0
-      );
-
-      if (this.resultBuffer.mapState === "unmapped") {
-        commandEncoder.copyBufferToBuffer(
-          this.resolveBuffer,
-          this.resultBuffer
-        );
-      }
-    };
-
-    return renderPass;
+    return this.beginPass(commandEncoder, "render", descriptor);
   }
 
   public reset(): void {

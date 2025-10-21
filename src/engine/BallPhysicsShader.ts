@@ -14,15 +14,34 @@ class BallPhysicsShader {
 
   private readonly settingsBuffer: GPUBuffer;
   private readonly ballStatesBuffer: GPUBuffer;
-
-  private _executionTimeMs: number;
   constructor(shader: Shader, device: GPUDevice, board: GaltonBoard) {
+    const frameTimeElement = document.getElementById(
+      "frameTime"
+    ) as HTMLElement;
+    const fpsElement = document.getElementById("fps") as HTMLElement;
+
     this.device = device;
     this.board = board;
     this.gpuTimer = new GPUTimer(device, (time) => {
-      this._executionTimeMs = time / 1000;
+      const microseconds = time / 1e3;
+      const milliseconds = time / 1e6;
+      const seconds = time / 1e9;
+      const useMilliseconds = milliseconds > 1;
+      const displayTime = (
+        useMilliseconds ? milliseconds : microseconds
+      ).toFixed(2);
+      const prefix = useMilliseconds ? "ms" : "μs";
+
+      frameTimeElement.textContent = displayTime + prefix;
+
+      const fps = 1 / seconds;
+      fpsElement.textContent = fps.toFixed(2);
     });
-    this._executionTimeMs = 0;
+
+    if (!this.gpuTimer.canTimestamp) {
+      frameTimeElement.textContent = "[Not supported by browser]";
+      fpsElement.textContent = "[Not supported by browser]";
+    }
 
     const SETTINGS_BYTE_LENGTH = 4 * 4;
     this.settingsBuffer = device.createBuffer({
@@ -99,10 +118,6 @@ class BallPhysicsShader {
         module: shader.shader,
       },
     });
-  }
-
-  public get executionTimeMs(): number {
-    return this._executionTimeMs;
   }
 
   public run(deltaTimeMs: number): void {
