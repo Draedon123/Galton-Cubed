@@ -3,8 +3,7 @@ import { Renderer } from "./engine/Renderer";
 import { Loop } from "./utils/Loop";
 import { initialiseConfigPanel } from "./configPanel";
 import { Vector3 } from "./utils/Vector3";
-import { Model } from "./engine/meshes/Model";
-import { Quaternion } from "./utils/Quaternion";
+import { GaltonBoard } from "./GaltonBoard";
 
 async function main(): Promise<void> {
   const canvas = document.getElementById("main") as HTMLCanvasElement;
@@ -19,32 +18,17 @@ async function main(): Promise<void> {
 
   await renderer.initialise();
 
-  const ball1 = new Model({
-    position: new Vector3(-2.5, -0.5, -0.5),
-    rotation: Quaternion.fromEulerAngles(0, 0, 0),
-    scale: new Vector3(1.2, 1.2, 1.2),
-  });
+  new GaltonBoard(renderer.ballScene);
 
-  const ball2 = new Model({
-    position: new Vector3(2.5, -0.5, -0.5),
-    rotation: Quaternion.fromEulerAngles(0, 0, 0),
-    scale: new Vector3(0.5, 0.5, 0.5),
-  });
-  renderer.ballScene.objects.push(ball1, ball2);
-
-  renderer.camera.position = new Vector3(3, 3, 3);
+  renderer.camera.position = new Vector3(60, 10, 100);
   renderer.camera.fovDegrees = 60;
-  renderer.camera.lookAt = new Vector3(0, 0, 0);
+  renderer.camera.lookAt = new Vector3(0, -50, 0);
 
   initialiseConfigPanel(renderer);
 
   const loop = new Loop();
 
   loop.addCallback(() => {
-    ball1.rotation.rotateX(0.5);
-    ball1.rotation.rotateY(1);
-    ball1.rotation.rotateZ(2);
-    renderer.ballScene.update();
     renderer.render();
   });
 
