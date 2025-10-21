@@ -13,6 +13,7 @@ class BallPhysicsShader {
   private readonly computePipeline: GPUComputePipeline;
 
   private readonly settingsBuffer: GPUBuffer;
+  private readonly ballStatesBuffer: GPUBuffer;
 
   private _executionTimeMs: number;
   constructor(shader: Shader, device: GPUDevice, board: GaltonBoard) {
@@ -23,17 +24,28 @@ class BallPhysicsShader {
     });
     this._executionTimeMs = 0;
 
+    const SETTINGS_BYTE_LENGTH = 4 * 4;
     this.settingsBuffer = device.createBuffer({
       label: "Ball Physics Shader Settings Buffer",
-      size: 2 * 4,
+      size: SETTINGS_BYTE_LENGTH,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
-    const settings = new BufferWriter(2 * 4);
+    const settings = new BufferWriter(SETTINGS_BYTE_LENGTH);
     settings.writeFloat32(0);
     settings.writeUint32(board.pegCount);
+    settings.writeFloat32(board.pegRadius);
+    settings.writeFloat32(board.ballRadius);
 
     device.queue.writeBuffer(this.settingsBuffer, 0, settings.buffer);
+
+    // don't need to write to buffer since accelerations and velocities will
+    // initialise to 0
+    this.ballStatesBuffer = device.createBuffer({
+      label: "Ball Physics Shader Ball States Buffer",
+      size: board.ballCount * 8 * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
 
     const bindGroupLayout = device.createBindGroupLayout({
       label: "Ball Physics Shader Bind Group Layout",
@@ -45,6 +57,11 @@ class BallPhysicsShader {
         },
         {
           binding: 1,
+          buffer: { type: "storage" },
+          visibility: GPUShaderStage.COMPUTE,
+        },
+        {
+          binding: 2,
           buffer: { type: "storage" },
           visibility: GPUShaderStage.COMPUTE,
         },
@@ -62,6 +79,10 @@ class BallPhysicsShader {
         {
           binding: 1,
           resource: { buffer: board.scene.sceneBuffer },
+        },
+        {
+          binding: 2,
+          resource: { buffer: this.ballStatesBuffer },
         },
       ],
     });

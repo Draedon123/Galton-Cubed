@@ -105,9 +105,15 @@ class GaltonBoard {
     const balls: Model[] = [];
 
     for (let i = 1; i <= ballCount; i++) {
+      const xOffset = 0.2 * this.ballRadius * (Math.random() - 0.5);
+      const zOffset = 0.2 * this.ballRadius * (Math.random() - 0.5);
+
       balls.push(
         new Model({
-          position: Vector3.add(start, new Vector3(0, SPACING * i, 0)),
+          position: Vector3.add(
+            start,
+            new Vector3(xOffset, SPACING * i, zOffset)
+          ),
           scale: new Vector3(this.ballRadius, this.ballRadius, this.ballRadius),
         })
       );

@@ -10,7 +10,9 @@ async function main(): Promise<void> {
   const frameTimeElement = document.getElementById("frameTime") as HTMLElement;
   const fpsElement = document.getElementById("fps") as HTMLElement;
 
-  const board = new GaltonBoard();
+  const board = new GaltonBoard({
+    ballCount: 100,
+  });
   const renderer = await Renderer.create(canvas, {
     scene: board.scene,
     cameraOptions: {
@@ -26,7 +28,7 @@ async function main(): Promise<void> {
   await renderer.initialise();
   await board.initialise(renderer.device);
 
-  renderer.camera.position = new Vector3(0, -25, 100);
+  renderer.camera.position = new Vector3(0, 10, 20);
   renderer.camera.fovDegrees = 60;
 
   initialiseConfigPanel(renderer);
