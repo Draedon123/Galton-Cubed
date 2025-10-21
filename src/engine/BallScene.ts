@@ -44,7 +44,7 @@ class BallScene {
 
     const bufferWriter = new BufferWriter(this.byteLength);
 
-    bufferWriter.writeFloat32(this.objects.length);
+    bufferWriter.writeUint32(this.objects.length);
     bufferWriter.pad(12);
 
     for (const object of this.objects) {
