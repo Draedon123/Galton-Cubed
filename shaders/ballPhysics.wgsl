@@ -20,7 +20,7 @@ struct BallState {
 @workgroup_size(8, 8, 1)
 fn main(@builtin(global_invocation_id) id: vec3u) {
   let index: u32 = id.x + 8 * id.y;
-  if(index + settings.pegCount > balls.count){
+  if(index + settings.pegCount >= balls.count){
     return;
   }
 
