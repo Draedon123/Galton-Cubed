@@ -1,11 +1,13 @@
 import type { BallScene } from "./engine/BallScene";
 import { Model } from "./engine/meshes/Model";
+import { hsvToRgb } from "./utils/hsvToRgb";
 import { Vector3 } from "./utils/Vector3";
 
 type GaltonBoardOptions = {
   layers: number;
   height: number;
   sideLength: number;
+  pegRadius: number;
 };
 
 class GaltonBoard {
@@ -13,7 +15,8 @@ class GaltonBoard {
     const pegs = this.createPegs(
       options.layers ?? 5,
       options.height ?? 50,
-      options.sideLength ?? 100
+      options.sideLength ?? 100,
+      options.pegRadius ?? 4
     );
 
     scene.objects.push(...pegs);
@@ -23,7 +26,8 @@ class GaltonBoard {
   private createPegs(
     layers: number,
     height: number,
-    sideLength: number
+    sideLength: number,
+    pegRadius: number
   ): Model[] {
     const pegs: Model[] = [];
 
@@ -33,11 +37,13 @@ class GaltonBoard {
 
     for (let y = 0; y < layers; y++) {
       const positionY = centre.y - y * dy;
-      const halfOffsets = (layers - y) / 2;
+      const offsets = (layers - y) / 2;
       const corner = Vector3.add(
         centre,
         new Vector3(-sideLength / 2, positionY, -sideLength / 2)
-      ).add(new Vector3(halfOffsets * (ds / 2), 0, halfOffsets * (ds / 2)));
+      ).add(new Vector3(offsets * ds, 0, offsets * ds));
+
+      const colour = hsvToRgb(360 * (y / layers), 1, 1);
 
       for (let x = 0; x < y + 1; x++) {
         const dx = x * ds;
@@ -48,6 +54,8 @@ class GaltonBoard {
           pegs.push(
             new Model({
               position,
+              scale: new Vector3(pegRadius, pegRadius, pegRadius),
+              colour,
             })
           );
         }

@@ -7,6 +7,7 @@ struct Vertex {
 struct VertexOutput {
   @builtin(position) position: vec4f,
   @location(0) normal: vec3f,
+  @location(1) colour: vec3f,
 }
 
 struct Balls {
@@ -15,15 +16,15 @@ struct Balls {
 }
 
 struct Ball {
-  @align(16) @size(64) modelMatrix: mat4x4f,
-  @align(16) @size(48) normalMatrix: mat3x3f,
+  modelMatrix: mat4x4f,
+  normalMatrix: mat3x3f,
+  @align(16) colour: vec3f,
 }
 
 @group(0) @binding(0) var <uniform> perspectiveViewMatrix: mat4x4f;
 @group(0) @binding(1) var <storage> balls: Balls;
 
 const LIGHT_DIRECTION: vec3f = normalize(vec3f(1.0, 1.0, 1.0));
-const DIFFUSE_COLOUR: vec3f = vec3f(1.0);
 const AMBIENT_STRENGTH: f32 = 0.1;
 const AMBIENT_COLOUR: vec3f = vec3f(1.0);
 
@@ -31,8 +32,10 @@ const AMBIENT_COLOUR: vec3f = vec3f(1.0);
 fn vertexMain(vertex: Vertex) -> VertexOutput {
   var output: VertexOutput;
 
-  output.position = perspectiveViewMatrix * balls.balls[vertex.index].modelMatrix * vec4f(vertex.position, 1.0);
-  output.normal = normalize(balls.balls[vertex.index].normalMatrix * vertex.normal);
+  let ball = balls.balls[vertex.index];
+  output.position = perspectiveViewMatrix * ball.modelMatrix * vec4f(vertex.position, 1.0);
+  output.normal = normalize(ball.normalMatrix * vertex.normal);
+  output.colour = ball.colour;
 
   return output;
 }
@@ -40,7 +43,7 @@ fn vertexMain(vertex: Vertex) -> VertexOutput {
 @fragment
 fn fragmentMain(vertex: VertexOutput) -> @location(0) vec4f {
   let diffuseStrength: f32 = max(0.0, dot(vertex.normal, LIGHT_DIRECTION));
-  let diffuse: vec3f = diffuseStrength * DIFFUSE_COLOUR;
+  let diffuse: vec3f = diffuseStrength * vertex.colour;
   let ambient: vec3f = AMBIENT_STRENGTH * AMBIENT_COLOUR;
 
   return vec4f(diffuse + ambient, 1.0);

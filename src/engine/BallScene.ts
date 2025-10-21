@@ -1,4 +1,5 @@
 import { BufferWriter } from "../utils/BufferWriter";
+import { Vector3 } from "../utils/Vector3";
 import type { Model } from "./meshes/Model";
 import { Sphere } from "./meshes/Sphere";
 
@@ -13,7 +14,7 @@ class BallScene {
     this.initialised = false;
     this.maxObjects = maxObjects;
     this.objects = [];
-    this.mesh = new Sphere(30, 2);
+    this.mesh = new Sphere(30, 1);
   }
 
   public initialise(device: GPUDevice): void {
@@ -49,13 +50,15 @@ class BallScene {
 
       bufferWriter.writeMat4x4f(modelMatrix);
       bufferWriter.writeMat3x3f(normalMatrix);
+      bufferWriter.writeVec3f(Vector3.scale(object.colour, 1 / 255));
+      bufferWriter.pad(4);
     }
 
     this.device.queue.writeBuffer(this.sceneBuffer, 0, bufferWriter.buffer);
   }
 
   public get byteLength(): number {
-    return 16 + this.maxObjects * (16 + 9) * 4;
+    return 16 + this.maxObjects * (16 + 9 + 4) * 4;
   }
 }
 

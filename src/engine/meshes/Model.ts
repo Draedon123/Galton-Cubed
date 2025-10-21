@@ -3,21 +3,25 @@ import { Matrix4 } from "../../utils/Matrix4";
 import { Quaternion } from "../../utils/Quaternion";
 import { Vector3 } from "../../utils/Vector3";
 
-type Transform = {
+type ModelOptions = {
   position: Vector3;
   rotation: Quaternion;
   scale: Vector3;
+  /** 0-255 */
+  colour: Vector3;
 };
 
 class Model {
   public position: Vector3;
   public rotation: Quaternion;
   public scale: Vector3;
+  public colour: Vector3;
 
-  constructor(transforms: Partial<Transform> = {}) {
+  constructor(transforms: Partial<ModelOptions> = {}) {
     this.position = transforms.position ?? new Vector3();
     this.rotation = transforms.rotation ?? new Quaternion();
     this.scale = transforms.scale ?? new Vector3(1, 1, 1);
+    this.colour = transforms.colour ?? new Vector3(255, 255, 255);
   }
 
   public calculateModelMatrix(): Matrix4 {

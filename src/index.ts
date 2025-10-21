@@ -20,9 +20,9 @@ async function main(): Promise<void> {
 
   new GaltonBoard(renderer.ballScene);
 
-  renderer.camera.position = new Vector3(60, 10, 100);
+  renderer.camera.position = new Vector3(0.1, 70, 0.001);
   renderer.camera.fovDegrees = 60;
-  renderer.camera.lookAt = new Vector3(0, -50, 0);
+  renderer.camera.lookAt = new Vector3(0.1, -20, 0);
 
   initialiseConfigPanel(renderer);
 
