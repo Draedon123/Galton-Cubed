@@ -9,7 +9,7 @@ async function main(): Promise<void> {
   const canvas = document.getElementById("main") as HTMLCanvasElement;
 
   const board = new GaltonBoard({
-    ballCount: 100,
+    ballCount: 10000,
   });
   const renderer = await Renderer.create(canvas, {
     scene: board.scene,
@@ -32,8 +32,9 @@ async function main(): Promise<void> {
   const generator = board.createBalls();
   let result = generator.next();
 
+  const spawnFrames = 10;
   loop.addCallback((frame) => {
-    if (!result.done && frame.frame % 10 === 9) {
+    if (!result.done && frame.frame % spawnFrames === spawnFrames - 1) {
       result = generator.next();
     }
 
