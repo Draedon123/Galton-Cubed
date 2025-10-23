@@ -1,3 +1,4 @@
+import { GPUTimer } from "../utils/GPUTimer";
 import { Matrix4Buffer } from "../utils/Matrix4Buffer";
 import { resolveBasePath } from "../utils/resolveBasePath";
 import { BallScene } from "./BallScene";
@@ -17,6 +18,7 @@ class Renderer {
 
   private readonly ctx: GPUCanvasContext;
   private readonly canvasFormat: GPUTextureFormat;
+  private readonly gpuTimer: GPUTimer;
 
   private initialised: boolean;
 
@@ -43,6 +45,31 @@ class Renderer {
     this.canvasFormat = "rgba8unorm";
     this.camera = new Camera(settings.cameraOptions);
     this.ballScene = settings.scene ?? new BallScene(100);
+
+    const frameTimeElement = document.getElementById(
+      "renderFrameTime"
+    ) as HTMLElement;
+    const fpsElement = document.getElementById("fps") as HTMLElement;
+    this.gpuTimer = new GPUTimer(this.device, (time) => {
+      const microseconds = time / 1e3;
+      const milliseconds = time / 1e6;
+      const seconds = time / 1e9;
+      const useMilliseconds = milliseconds > 1;
+      const displayTime = (
+        useMilliseconds ? milliseconds : microseconds
+      ).toFixed(2);
+      const prefix = useMilliseconds ? "ms" : "μs";
+      const fps = 1 / seconds;
+
+      frameTimeElement.textContent = displayTime + prefix;
+      fpsElement.textContent = fps.toFixed(2);
+    });
+
+    if (!this.gpuTimer.canTimestamp) {
+      frameTimeElement.textContent = "[Not supported by browser]";
+      fpsElement.textContent = "[Not supported by browser]";
+    }
+
     this.perspectiveViewMatrix = new Matrix4Buffer(
       device,
       "Perspective View Matrix"
@@ -102,7 +129,7 @@ class Renderer {
     this.depthTexture = this.createDepthTexture();
 
     const renderBindGroupLayout = this.device.createBindGroupLayout({
-      label: "Cube Bind Group Layout",
+      label: "Render Bind Group Layout",
       entries: [
         {
           binding: 0,
@@ -118,7 +145,7 @@ class Renderer {
     });
 
     this.renderBindGroup = this.device.createBindGroup({
-      label: "Render Bing Group",
+      label: "Render Bind Group",
       layout: renderBindGroupLayout,
       entries: [
         {
@@ -191,7 +218,7 @@ class Renderer {
 
   private renderToCanvas(): void {
     const commandEncoder = this.device.createCommandEncoder();
-    const renderPass = commandEncoder.beginRenderPass({
+    const renderPass = this.gpuTimer.beginRenderPass(commandEncoder, {
       colorAttachments: [
         {
           view: this.ctx.getCurrentTexture().createView(),

@@ -27,7 +27,7 @@ class GPUTimer {
 
       this.resolveBuffer = device.createBuffer({
         label: "GPUTimer Resolve Buffer",
-        size: this.querySet.count * BigInt64Array.BYTES_PER_ELEMENT,
+        size: this.querySet.count * 8,
         usage: GPUBufferUsage.QUERY_RESOLVE | GPUBufferUsage.COPY_SRC,
       });
 
@@ -42,17 +42,23 @@ class GPUTimer {
     device.queue.submit = (commandBuffers: Iterable<GPUCommandBuffer>) => {
       originalSubmitMethod(commandBuffers);
 
-      if (!this.canTimestamp || this.resultBuffer.mapState !== "unmapped") {
+      if (!this.canTimestamp) {
         return;
       }
 
-      this.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-        const times = new BigInt64Array(this.resultBuffer.getMappedRange());
+      device.queue.onSubmittedWorkDone().then(() => {
+        if (this.resultBuffer.mapState !== "unmapped") {
+          return;
+        }
 
-        this.rollingAverage.addSample(Number(times[1] - times[0]));
-        this.resultBuffer.unmap();
+        this.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
+          const times = new BigInt64Array(this.resultBuffer.getMappedRange());
 
-        this.onUpdate(this.rollingAverage.average);
+          this.rollingAverage.addSample(Number(times[1] - times[0]));
+          this.resultBuffer.unmap();
+
+          this.onUpdate(this.rollingAverage.average);
+        });
       });
     };
   }
@@ -64,22 +70,25 @@ class GPUTimer {
   public beginPass(
     commandEncoder: GPUCommandEncoder,
     passType: "render",
-    descriptor?: Omit<GPURenderPassDescriptor, "timestampWrites">
+    descriptor: Omit<GPURenderPassDescriptor, "timestampWrites">
   ): GPURenderPassEncoder;
   public beginPass(
     commandEncoder: GPUCommandEncoder,
     passType: "compute",
-    descriptor?: Omit<GPUComputePassDescriptor, "timestampWrites">
+    descriptor: Omit<GPUComputePassDescriptor, "timestampWrites">
   ): GPUComputePassEncoder;
   public beginPass(
     commandEncoder: GPUCommandEncoder,
     passType: "render" | "compute",
-    descriptor?: Omit<
-      GPUComputePassDescriptor | GPURenderPassDescriptor,
+    descriptor: Omit<
+      // hack
+      GPURenderPassDescriptor,
       "timestampWrites"
     >
   ): GPUComputePassEncoder | GPURenderPassEncoder {
-    const timestampWrites: GPUComputePassTimestampWrites = {
+    const timestampWrites:
+      | GPURenderPassTimestampWrites
+      | GPUComputePassTimestampWrites = {
       querySet: this.querySet,
       beginningOfPassWriteIndex: 0,
       endOfPassWriteIndex: 1,
@@ -87,7 +96,6 @@ class GPUTimer {
 
     const pass = commandEncoder[
       passType === "render" ? "beginRenderPass" : "beginComputePass"
-      // @ts-expect-error idk how to fix the type error but i swear it's type safe
     ]({
       ...descriptor,
       ...(this.canTimestamp ? { timestampWrites } : undefined),
@@ -122,7 +130,7 @@ class GPUTimer {
 
   public beginComputePass(
     commandEncoder: GPUCommandEncoder,
-    descriptor?: Omit<GPUComputePassDescriptor, "timestampWrites">
+    descriptor: Omit<GPUComputePassDescriptor, "timestampWrites">
   ): GPUComputePassEncoder {
     return this.beginPass(commandEncoder, "compute", descriptor);
   }
