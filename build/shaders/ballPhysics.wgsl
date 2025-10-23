@@ -16,9 +16,9 @@ const BOTTOM: f32 = -100.0;
 const GRAVITY: f32 = -100.0;
 
 @compute
-@workgroup_size(8, 8, 1)
+@workgroup_size(64, 1, 1)
 fn main(@builtin(global_invocation_id) id: vec3u) {
-  let index: u32 = id.x + 8 * id.y;
+  let index: u32 = id.x;
   let ballIndex: u32 = index + settings.pegCount;
   if(ballIndex >= balls.count){
     return;

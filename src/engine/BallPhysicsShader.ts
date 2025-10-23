@@ -13,7 +13,7 @@ class BallPhysicsShader {
   private readonly computePipeline: GPUComputePipeline;
 
   private readonly settingsBuffer: GPUBuffer;
-  private readonly ballStatesBuffer: GPUBuffer;
+  private readonly ballVelocitiesBuffer: GPUBuffer;
   constructor(shader: Shader, device: GPUDevice, board: GaltonBoard) {
     const frameTimeElement = document.getElementById(
       "frameTime"
@@ -59,7 +59,7 @@ class BallPhysicsShader {
     device.queue.writeBuffer(this.settingsBuffer, 0, settings.buffer);
 
     // don't need to write to buffer since velocities will initialise to 0
-    this.ballStatesBuffer = device.createBuffer({
+    this.ballVelocitiesBuffer = device.createBuffer({
       label: "Ball Physics Shader Ball States Buffer",
       size: board.maxBallCount * 4 * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
@@ -100,7 +100,7 @@ class BallPhysicsShader {
         },
         {
           binding: 2,
-          resource: { buffer: this.ballStatesBuffer },
+          resource: { buffer: this.ballVelocitiesBuffer },
         },
       ],
     });
@@ -133,11 +133,7 @@ class BallPhysicsShader {
 
     computePass.setBindGroup(0, this.bindGroup);
     computePass.setPipeline(this.computePipeline);
-    computePass.dispatchWorkgroups(
-      Math.ceil(this.board.ballCount / 64),
-      Math.ceil(this.board.ballCount / 64),
-      1
-    );
+    computePass.dispatchWorkgroups(Math.ceil(this.board.ballCount / 64), 1, 1);
     computePass.end();
 
     this.device.queue.submit([commandEncoder.finish()]);
