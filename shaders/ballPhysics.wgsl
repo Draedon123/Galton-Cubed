@@ -7,16 +7,13 @@ struct Settings {
   ballRadius: f32,
 }
 
-struct BallState {
-  @align(16) acceleration: vec3f,
-  @align(16) velocity: vec3f,
-}
-
 @group(0) @binding(0) var <storage> settings: Settings;
 @group(0) @binding(1) var <storage, read_write> balls: Balls;
-@group(0) @binding(2) var <storage, read_write> ballStates: array<BallState>;
+@group(0) @binding(2) var <storage, read_write> ballVelocities: array<vec3f>;
 
 const RESTITUTION: f32 = 0.5;
+const BOTTOM: f32 = -100.0;
+const GRAVITY: f32 = -100.0;
 
 @compute
 @workgroup_size(8, 8, 1)
@@ -30,6 +27,13 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
   let deltaTime: f32 = settings.deltaTimeMs / 1000.0;
   var position: vec3f = extractPosition(&balls.balls[ballIndex].modelMatrix);
 
+  if(position.y <= BOTTOM){
+    position.y = BOTTOM;
+    setPosition(&balls.balls[ballIndex].modelMatrix, position);
+
+    return;
+  }
+
   for(var i: u32 = 0; i < settings.pegCount; i++){
     let pegPosition: vec3f = extractPosition(&balls.balls[i].modelMatrix);
     let toPeg: vec3f = pegPosition - position;
@@ -37,20 +41,20 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
     let distanceBetweenCentres: f32 = length(toPeg);
 
     if(distanceBetweenCentres - settings.pegRadius - settings.ballRadius <= 0.0){
-      ballStates[index].velocity -= (1.0 + RESTITUTION) * collisionNormal * max(0.0, dot(collisionNormal, ballStates[index].velocity));
+      ballVelocities[index] -= (1.0 + RESTITUTION) * collisionNormal * max(0.0, dot(collisionNormal, ballVelocities[index]));
       position = pegPosition - collisionNormal * (settings.pegRadius + settings.ballRadius);
 
       break;
     }
   }
 
-  ballStates[index].acceleration.y = -2000.0 * deltaTime;
-  ballStates[index].velocity += ballStates[index].acceleration * deltaTime;
-  position += ballStates[index].velocity * deltaTime;
+  ballVelocities[index].y += 0.5 * GRAVITY * deltaTime;
+  position += ballVelocities[index] * deltaTime;
+  ballVelocities[index].y += 0.5 * GRAVITY * deltaTime;
 
   if(position.y < -100){
     position.y = -100;
-    ballStates[index].velocity = vec3f(0.0);
+    ballVelocities[index] = vec3f(0.0);
   }
 
   setPosition(&balls.balls[ballIndex].modelMatrix, position);
