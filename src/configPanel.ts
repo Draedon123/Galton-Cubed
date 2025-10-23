@@ -1,6 +1,7 @@
 import type { Renderer } from "./engine/Renderer";
 
 // @ts-expect-error just a placeholder; wil be used later
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function initialiseConfigPanel(renderer: Renderer): void {
   initialiseChevron();
 }
