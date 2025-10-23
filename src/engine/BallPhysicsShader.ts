@@ -58,11 +58,10 @@ class BallPhysicsShader {
 
     device.queue.writeBuffer(this.settingsBuffer, 0, settings.buffer);
 
-    // don't need to write to buffer since accelerations and velocities will
-    // initialise to 0
+    // don't need to write to buffer since velocities will initialise to 0
     this.ballStatesBuffer = device.createBuffer({
       label: "Ball Physics Shader Ball States Buffer",
-      size: board.maxBallCount * 8 * 4,
+      size: board.maxBallCount * 4 * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
@@ -124,9 +123,7 @@ class BallPhysicsShader {
     this.device.queue.writeBuffer(
       this.settingsBuffer,
       0,
-      new Float32Array([deltaTimeMs]),
-      0,
-      1
+      new Float32Array([deltaTimeMs])
     );
 
     const commandEncoder = this.device.createCommandEncoder();
@@ -137,8 +134,8 @@ class BallPhysicsShader {
     computePass.setBindGroup(0, this.bindGroup);
     computePass.setPipeline(this.computePipeline);
     computePass.dispatchWorkgroups(
-      Math.ceil(this.board.ballCount / 8),
-      Math.ceil(this.board.ballCount / 8),
+      Math.ceil(this.board.ballCount / 64),
+      Math.ceil(this.board.ballCount / 64),
       1
     );
     computePass.end();

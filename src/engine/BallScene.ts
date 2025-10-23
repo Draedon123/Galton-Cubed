@@ -17,7 +17,7 @@ class BallScene {
     this.initialised = false;
     this.maxObjects = maxObjects;
     this.objects = [];
-    this.mesh = new Sphere(30, 1);
+    this.mesh = new Sphere(15, 1);
   }
 
   public initialise(device: GPUDevice): void {
@@ -66,9 +66,7 @@ class BallScene {
     this.device.queue.writeBuffer(
       this.sceneBuffer,
       16 + (this.objects.length - lastObjects) * this.ballByteLength,
-      bufferWriter.buffer,
-      0,
-      lastObjects * this.ballByteLength
+      bufferWriter.buffer
     );
   }
 
