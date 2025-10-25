@@ -78,7 +78,7 @@ class SingleObjectScene {
     );
   }
 
-  public addObjects(objects: Model[]): void {
+  public addObjects(objects: Model[], updateDrawArgs: boolean = true): void {
     const sceneIndex = this.scene?.scenes.indexOf(this);
     const maxObjects = this.scene?.maxObjectsPerScene[sceneIndex];
 
@@ -94,7 +94,9 @@ class SingleObjectScene {
       this.objects.push(object);
     }
 
-    this.updateDrawArgs();
+    if (updateDrawArgs) {
+      this.updateDrawArgs();
+    }
   }
 
   public updateDrawArgs(

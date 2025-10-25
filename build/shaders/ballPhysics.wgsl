@@ -43,6 +43,7 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
     return;
   }
 
+
   let instanceCount: u32 = atomicAdd(&drawArgs.instanceCount, 1) + 1;
   ballsToDraw[instanceCount - settings.pegCount] = ballIndex;
 
@@ -58,6 +59,11 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
 
       break;
     }
+  }
+
+  if(position.y < settings.lastLayer){
+    ballVelocities[index].x *= 0.97;
+    ballVelocities[index].z *= 0.97;
   }
 
   ballVelocities[index].y += 0.5 * GRAVITY * deltaTime;

@@ -6,7 +6,7 @@ import { roundUp } from "../utils/roundUp";
 import { Shader } from "./Shader";
 
 class BallPhysicsShader {
-  private static readonly SETTINGS_BYTE_LENGTH: number = roundUp(7 * 4, 16);
+  private static readonly SETTINGS_BYTE_LENGTH: number = roundUp(8 * 4, 16);
 
   public readonly settingsBuffer: GPUBuffer;
   public readonly heightsBuffer: GPUBuffer;
@@ -165,6 +165,7 @@ class BallPhysicsShader {
         this.board.floorThickness
     );
     settings.writeFloat32(this.board.floorResolution);
+    settings.writeFloat32(-this.board.height - this.board.pegRadius);
 
     this.device.queue.writeBuffer(this.settingsBuffer, 0, settings.buffer);
   }

@@ -9,10 +9,12 @@ async function main(): Promise<void> {
   const canvas = document.getElementById("main") as HTMLCanvasElement;
 
   const board = new GaltonBoard({
-    ballCount: 30000,
-    layers: 8,
-    pegRadius: 3,
-    floorResolution: 256,
+    ballCount: 100000,
+    layers: 9,
+    pegRadius: 4,
+    floorResolution: 320,
+    floorOffset: 100,
+    sideLength: 125,
   });
   const renderer = await Renderer.create(canvas, {
     scene: board.scene,
@@ -32,11 +34,12 @@ async function main(): Promise<void> {
 
   const loop = new Loop({ wormholeThreshold: 100 });
 
-  const generator = board.createBalls();
+  const spawnFrames = 1;
+  const ballsPerSpawnWave = 50;
+
+  const generator = board.createBalls(ballsPerSpawnWave);
   let result = generator.next();
 
-  const spawnFrames = 1;
-  const ballsPerSpawnWave = 10;
   loop.addCallback((frame) => {
     if (!result.done && frame.frame % spawnFrames === spawnFrames - 1) {
       for (let i = 0; i < ballsPerSpawnWave; i++) {
