@@ -43,7 +43,6 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
     return;
   }
 
-
   let instanceCount: u32 = atomicAdd(&drawArgs.instanceCount, 1) + 1;
   ballsToDraw[instanceCount - settings.pegCount] = ballIndex;
 
@@ -68,6 +67,9 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
 
   ballVelocities[index].y += 0.5 * GRAVITY * deltaTime;
   position += ballVelocities[index] * deltaTime;
+
+  position.y = max(position.y, settings.bottom);
+
   ballVelocities[index].y += 0.5 * GRAVITY * deltaTime;
 
   setPosition(&objects[ballIndex].modelMatrix, position);
