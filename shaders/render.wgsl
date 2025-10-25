@@ -42,7 +42,10 @@ fn vertexMain(vertex: Vertex) -> VertexOutput {
 
     let position: vec3f = extractPosition(object.modelMatrix);
     let bufferIndex: u32 = getBufferIndex(position.xz, physicsSettings.floorSideLength);
-    let height: f32 = heights[bufferIndex] / 2.0;
+    let height: f32 = heights[bufferIndex];
+
+    object.colour.r -= 0.02 * height;
+    object.colour.g -= 0.03 * height;
 
     // scale Y
     modelMatrix[1].x *= height;

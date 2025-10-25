@@ -11,6 +11,7 @@ struct PhysicsSettings {
   ballCount: u32,
   bottom: f32,
   floorSideLength: f32,
+  lastLayer: f32,
 }
 
 fn extractPosition(modelMatrix: mat4x4f) -> vec3f {
