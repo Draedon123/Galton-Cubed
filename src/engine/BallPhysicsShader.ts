@@ -89,7 +89,7 @@ class BallPhysicsShader {
         },
         {
           binding: 1,
-          resource: { buffer: board.scene.scene.sceneBuffer },
+          resource: { buffer: board.spheres.scene.sceneBuffer },
         },
         {
           binding: 2,

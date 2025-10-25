@@ -236,8 +236,12 @@ class Renderer {
     renderPass.setPipeline(this.renderPipeline);
 
     for (const scene of this.scenes.scenes) {
+      if (scene.objectCount === 0) {
+        continue;
+      }
+
       scene.mesh.bind(renderPass);
-      renderPass.drawIndexed(scene.mesh.indexCount, scene.objects.length);
+      renderPass.drawIndexed(scene.mesh.indexCount, scene.objectCount);
     }
 
     renderPass.end();

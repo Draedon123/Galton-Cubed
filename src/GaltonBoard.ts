@@ -5,6 +5,7 @@ import { hsvToRgb } from "./utils/hsvToRgb";
 import { Vector3 } from "./utils/Vector3";
 import { Sphere } from "./engine/meshes/Sphere";
 import type { Renderer } from "./engine/Renderer";
+import { Cube } from "./engine/meshes/Cube";
 
 type GaltonBoardOptions = {
   layers: number;
@@ -17,7 +18,8 @@ type GaltonBoardOptions = {
 };
 
 class GaltonBoard {
-  public readonly scene: SingleObjectScene;
+  public readonly spheres: SingleObjectScene;
+  public readonly floor: SingleObjectScene;
   public readonly maxBallCount: number;
   public readonly pegCount: number;
   public readonly ballRadius: number;
@@ -42,15 +44,16 @@ class GaltonBoard {
 
     this.pegCount = pegs.length;
 
-    this.scene = new SingleObjectScene(new Sphere(15, 1));
+    this.spheres = new SingleObjectScene(new Sphere(15, 1));
+    this.floor = new SingleObjectScene(new Cube(1, 1));
 
     for (const peg of pegs) {
-      this.scene.objects.push(peg);
+      this.spheres.addObject(peg);
     }
   }
 
   public get ballCount(): number {
-    return this.scene.objects.length - this.pegCount;
+    return this.spheres.objectCount - this.pegCount;
   }
 
   private createPegs(
@@ -104,7 +107,7 @@ class GaltonBoard {
       const xOffset = 1 * this.ballRadius * (Math.random() - 0.5);
       const zOffset = 1 * this.ballRadius * (Math.random() - 0.5);
 
-      this.scene.objects.push(
+      this.spheres.addObject(
         new Model({
           position: Vector3.add(
             this.start,
@@ -114,7 +117,7 @@ class GaltonBoard {
         })
       );
 
-      this.scene.update(1);
+      this.spheres.update(1);
       yield;
     }
   }
@@ -132,8 +135,9 @@ class GaltonBoard {
       return;
     }
 
-    renderer.scenes.scenes.push(this.scene);
-    this.scene.initialise(renderer.scenes, renderer.device);
+    renderer.scenes.scenes.push(this.spheres, this.floor);
+    this.spheres.initialise(renderer.scenes, renderer.device);
+    this.floor.initialise(renderer.scenes, renderer.device);
     this.ballPhysicsShader = await BallPhysicsShader.create(
       renderer.device,
       this

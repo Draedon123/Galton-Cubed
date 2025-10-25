@@ -8,9 +8,9 @@ import { Scene } from "./Scene";
 class SingleObjectScene {
   public readonly mesh: Sphere;
 
-  public objects: Model[];
   public scene!: Scene;
 
+  private objects: Model[];
   private initialised: boolean;
   private device!: GPUDevice;
 
@@ -70,6 +70,20 @@ class SingleObjectScene {
         this.sceneByteOffset,
       bufferWriter.buffer
     );
+  }
+
+  public addObject(object: Model): void {
+    if (this.objects.length >= this.scene?.maxObjectsPerScene) {
+      console.warn("Maximum number of objects reached. New objects not added");
+
+      return;
+    }
+
+    this.objects.push(object);
+  }
+
+  public get objectCount(): number {
+    return this.objects.length;
   }
 
   private get sceneByteOffset(): number {

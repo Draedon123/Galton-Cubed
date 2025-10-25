@@ -1,9 +1,9 @@
-struct Balls {
+struct Objects {
   @align(16) count: u32,
-  balls: array<Ball>,
+  objects: array<Object>,
 }
 
-struct Ball {
+struct Object {
   modelMatrix: mat4x4f,
   @align(16) colour: vec3f,
 }

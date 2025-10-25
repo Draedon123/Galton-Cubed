@@ -14,6 +14,22 @@ class Scene {
     this.maxObjectsPerScene = maxObjectsPerScene;
     this.maxScenes = maxScenes;
     this.scenes = [];
+
+    const originalPush = this.scenes.push.bind(this.scenes);
+    this.scenes.push = (...items) => {
+      for (const item of items) {
+        if (this.scenes.length >= this.maxScenes) {
+          console.warn(
+            "Maximum number of scenes reached. New scenes not added"
+          );
+          break;
+        }
+
+        originalPush(item);
+      }
+
+      return this.scenes.length;
+    };
     this.initialised = false;
   }
 
