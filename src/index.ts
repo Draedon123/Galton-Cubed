@@ -22,8 +22,8 @@ async function main(): Promise<void> {
     },
   });
 
-  await renderer.initialise();
   await board.initialise(renderer.device);
+  await renderer.initialise(board);
 
   renderer.camera.position = new Vector3(0, 10, 20);
   renderer.camera.fovDegrees = 60;
@@ -36,9 +36,12 @@ async function main(): Promise<void> {
   let result = generator.next();
 
   const spawnFrames = 1;
+  const ballsPerSpawnWave = 3;
   loop.addCallback((frame) => {
     if (!result.done && frame.frame % spawnFrames === spawnFrames - 1) {
-      result = generator.next();
+      for (let i = 0; i < ballsPerSpawnWave; i++) {
+        result = generator.next();
+      }
     }
 
     renderer.camera.checkKeyboardInputs(frame.deltaTime);

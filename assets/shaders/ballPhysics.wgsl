@@ -1,17 +1,11 @@
-#!import objects
+#!import shared
 
-struct Settings {
-  deltaTimeMs: f32,
-  pegCount: u32,
-  pegRadius: f32,
-  ballRadius: f32,
-  ballCount: u32,
-  bottom: f32,
-}
-
-@group(0) @binding(0) var <uniform> settings: Settings;
+@group(0) @binding(0) var <uniform> settings: PhysicsSettings;
 @group(0) @binding(1) var <storage, read_write> objects: array<Object>;
 @group(0) @binding(2) var <storage, read_write> ballVelocities: array<vec3f>;
+
+@group(1) @binding(0) var densityMapIn: texture_storage_2d<r32uint, read>;
+@group(1) @binding(1) var densityMapOut: texture_storage_2d<r32uint, write>;
 
 const RESTITUTION: f32 = 0.5;
 const GRAVITY: f32 = -100.0;
@@ -26,17 +20,21 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
 
   let ballIndex: u32 = index + settings.pegCount;
   let deltaTime: f32 = settings.deltaTimeMs / 1000.0;
-  var position: vec3f = extractPosition(&objects[ballIndex].modelMatrix);
+  var position: vec3f = extractPosition(objects[ballIndex].modelMatrix);
 
-  if(position.y <= settings.bottom){
-    position.y = settings.bottom;
+  if(position.y <= settings.bottom && position.y > -1e10){
+    // hack to make this run only once
+    position.y = -2e10;
     setPosition(&objects[ballIndex].modelMatrix, position);
+
+    let texturePosition: vec2u = getTexturePosition(position.xz, settings.floorSideLength, textureDimensions(densityMapIn));
+    textureStore(densityMapOut, texturePosition, vec4u(textureLoad(densityMapIn, texturePosition).r + 1));
 
     return;
   }
 
   for(var i: u32 = 0; i < settings.pegCount; i++){
-    let pegPosition: vec3f = extractPosition(&objects[i].modelMatrix);
+    let pegPosition: vec3f = extractPosition(objects[i].modelMatrix);
     let toPeg: vec3f = pegPosition - position;
     let collisionNormal = normalize(toPeg);
     let distanceBetweenCentres: f32 = length(toPeg);
@@ -53,16 +51,7 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
   position += ballVelocities[index] * deltaTime;
   ballVelocities[index].y += 0.5 * GRAVITY * deltaTime;
 
-  if(position.y < -100){
-    position.y = -100;
-    ballVelocities[index] = vec3f(0.0);
-  }
-
   setPosition(&objects[ballIndex].modelMatrix, position);
-}
-
-fn extractPosition(modelMatrix: ptr<storage, mat4x4f, read_write>) -> vec3f {
-  return modelMatrix[3].xyz;
 }
 
 fn setPosition(modelMatrix: ptr<storage, mat4x4f, read_write>, position: vec3f) {

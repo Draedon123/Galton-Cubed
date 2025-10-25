@@ -5,6 +5,7 @@ import { Camera, type CameraOptions } from "./Camera";
 import { Shader } from "./Shader";
 import { Scene } from "./Scene";
 import { BufferWriter } from "../utils/BufferWriter";
+import type { GaltonBoard } from "../GaltonBoard";
 
 type RendererSettings = {
   cameraOptions?: Partial<CameraOptions>;
@@ -26,6 +27,7 @@ class Renderer {
   private renderBindGroup!: GPUBindGroup;
   private renderPipeline!: GPURenderPipeline;
   private depthTexture!: GPUTexture;
+  private board!: GaltonBoard;
 
   private readonly parametersBuffer!: GPUBuffer;
   private readonly perspectiveViewMatrix: Matrix4Buffer;
@@ -86,13 +88,12 @@ class Renderer {
     this.initialised = false;
   }
 
-  public async initialise(): Promise<void> {
+  public async initialise(board: GaltonBoard): Promise<void> {
     if (this.initialised) {
       return;
     }
 
-    this.scenes.initialise(this.device);
-
+    this.board = board;
     await this.initialiseRendering();
 
     const bufferWriter = new BufferWriter(this.scenes.maxScenes * 256);
@@ -168,6 +169,11 @@ class Renderer {
           buffer: { type: "uniform", hasDynamicOffset: true },
           visibility: GPUShaderStage.VERTEX,
         },
+        {
+          binding: 3,
+          buffer: { type: "uniform" },
+          visibility: GPUShaderStage.VERTEX,
+        },
       ],
     });
 
@@ -187,12 +193,19 @@ class Renderer {
           binding: 2,
           resource: { buffer: this.parametersBuffer, size: 256 },
         },
+        {
+          binding: 3,
+          resource: { buffer: this.board.ballPhysicsShader.settingsBuffer },
+        },
       ],
     });
 
     const pipelineLayout = this.device.createPipelineLayout({
       label: "Renderer Render Pipeline Layout",
-      bindGroupLayouts: [renderBindGroupLayout],
+      bindGroupLayouts: [
+        renderBindGroupLayout,
+        this.board.ballPhysicsShader.probabilityMapTexture.bindGroupLayout,
+      ],
     });
 
     this.renderPipeline = this.device.createRenderPipeline({
@@ -275,6 +288,12 @@ class Renderer {
       }
 
       renderPass.setBindGroup(0, this.renderBindGroup, [i * 256]);
+      renderPass.setBindGroup(
+        1,
+        this.board.ballPhysicsShader.probabilityMapTexture.bindGroups[
+          this.board.ballPhysicsShader.probabilityMapTexture.state
+        ]
+      );
       scene.mesh.bind(renderPass);
       renderPass.drawIndexed(scene.mesh.indexCount, scene.objectCount);
     }

@@ -37,7 +37,8 @@ class GaltonBoard {
   private readonly sideLength: number;
 
   private initialised: boolean;
-  private ballPhysicsShader!: BallPhysicsShader;
+
+  public ballPhysicsShader!: BallPhysicsShader;
   constructor(options: Partial<GaltonBoardOptions> = {}) {
     this.initialised = false;
     this.maxBallCount = options.ballCount ?? 100;
@@ -118,23 +119,22 @@ class GaltonBoard {
 
   private createFloor(): Model[] {
     const tiles: Model[] = [];
-    const sideLength = this.sideLength * 2.2;
 
     const corner = Vector3.subtract(
       this.start,
       new Vector3(
-        sideLength * 0.5,
+        this.floorResolution * 0.5,
         this.floorOffset + this.height,
-        sideLength * 0.5
+        this.floorResolution * 0.5
       )
     );
 
-    const tileSideLength = sideLength / this.floorResolution;
+    const tileSideLength = this.floorResolution / this.floorResolution;
     const colour = new Vector3(255, 255, 255);
     const scale = new Vector3(
-      sideLength / this.floorResolution,
+      this.floorResolution / this.floorResolution,
       this.floorThickness,
-      sideLength / this.floorResolution
+      this.floorResolution / this.floorResolution
     );
 
     for (let x = 0; x < this.floorResolution; x++) {
@@ -197,6 +197,7 @@ class GaltonBoard {
       return;
     }
 
+    this.scene.initialise(device);
     this.spheres.initialise(this.scene, device);
     this.floor.initialise(this.scene, device);
     this.ballPhysicsShader = await BallPhysicsShader.create(device, this);
