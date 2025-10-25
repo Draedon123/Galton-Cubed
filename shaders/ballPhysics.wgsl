@@ -5,37 +5,38 @@ struct Settings {
   pegCount: u32,
   pegRadius: f32,
   ballRadius: f32,
+  ballCount: u32,
+  bottom: f32,
 }
 
-@group(0) @binding(0) var <storage> settings: Settings;
-@group(0) @binding(1) var <storage, read_write> balls: Objects;
+@group(0) @binding(0) var <uniform> settings: Settings;
+@group(0) @binding(1) var <storage, read_write> objects: array<Object>;
 @group(0) @binding(2) var <storage, read_write> ballVelocities: array<vec3f>;
 
 const RESTITUTION: f32 = 0.5;
-const BOTTOM: f32 = -100.0;
 const GRAVITY: f32 = -100.0;
 
 @compute
 @workgroup_size(64, 1, 1)
 fn main(@builtin(global_invocation_id) id: vec3u) {
   let index: u32 = id.x;
-  let ballIndex: u32 = index + settings.pegCount;
-  if(ballIndex >= balls.count){
+  if(index >= settings.ballCount){
     return;
   }
 
+  let ballIndex: u32 = index + settings.pegCount;
   let deltaTime: f32 = settings.deltaTimeMs / 1000.0;
-  var position: vec3f = extractPosition(&balls.objects[ballIndex].modelMatrix);
+  var position: vec3f = extractPosition(&objects[ballIndex].modelMatrix);
 
-  if(position.y <= BOTTOM){
-    position.y = BOTTOM;
-    setPosition(&balls.objects[ballIndex].modelMatrix, position);
+  if(position.y <= settings.bottom){
+    position.y = settings.bottom;
+    setPosition(&objects[ballIndex].modelMatrix, position);
 
     return;
   }
 
   for(var i: u32 = 0; i < settings.pegCount; i++){
-    let pegPosition: vec3f = extractPosition(&balls.objects[i].modelMatrix);
+    let pegPosition: vec3f = extractPosition(&objects[i].modelMatrix);
     let toPeg: vec3f = pegPosition - position;
     let collisionNormal = normalize(toPeg);
     let distanceBetweenCentres: f32 = length(toPeg);
@@ -57,7 +58,7 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
     ballVelocities[index] = vec3f(0.0);
   }
 
-  setPosition(&balls.objects[ballIndex].modelMatrix, position);
+  setPosition(&objects[ballIndex].modelMatrix, position);
 }
 
 fn extractPosition(modelMatrix: ptr<storage, mat4x4f, read_write>) -> vec3f {
