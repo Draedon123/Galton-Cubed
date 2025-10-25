@@ -21,6 +21,8 @@ struct Parameters {
 @group(0) @binding(2) var <uniform> parameters: Parameters;
 @group(0) @binding(3) var <uniform> physicsSettings: PhysicsSettings;
 @group(0) @binding(4) var <storage> heights: array<f32>;
+@group(0) @binding(5) var <storage> ballsToDraw: array<u32>;
+
 
 const HEIGHT_NORMALISATION: f32 = 2.0 * 3.141592653589793;
 
@@ -32,7 +34,7 @@ const AMBIENT_COLOUR: vec3f = vec3f(1.0);
 fn vertexMain(vertex: Vertex) -> VertexOutput {
   var output: VertexOutput;
 
-  let object = objects[vertex.index + parameters.objectOffset];
+  var object = objects[vertex.index + parameters.objectOffset];
   var modelMatrix: mat4x4f = object.modelMatrix;
 
   if(parameters.objectOffset > 0){
@@ -49,6 +51,11 @@ fn vertexMain(vertex: Vertex) -> VertexOutput {
 
     // translate Y
     modelMatrix[3][1] += (modelMatrix[1].y - 1.0) / 2.0;
+  } else if(vertex.index >= physicsSettings.pegCount){
+    // is a ball
+    
+    object = objects[ballsToDraw[vertex.index - physicsSettings.pegCount]];
+    modelMatrix = object.modelMatrix;
   }
 
   output.position = perspectiveViewMatrix * modelMatrix * vec4f(vertex.position, 1.0);
