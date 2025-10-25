@@ -126,7 +126,7 @@ class GaltonBoard {
     );
 
     const tileSideLength = this.floorResolution / this.floorResolution;
-    const colour = new Vector3(255, 255, 255);
+    const colour = new Vector3(1, 1, 1);
     const scale = new Vector3(
       this.floorResolution / this.floorResolution,
       this.floorThickness,
@@ -137,10 +137,11 @@ class GaltonBoard {
       for (let z = 0; z < this.floorResolution; z++) {
         tiles.push(
           new Model({
-            position: Vector3.add(
-              corner,
-              new Vector3(x * tileSideLength, 0, z * tileSideLength)
-            ).add(Vector3.scale(scale, 0.5)),
+            position: new Vector3(
+              corner.x + x * tileSideLength + scale.x * 0.5,
+              corner.y + scale.y * 0.5,
+              corner.z + z * tileSideLength + scale.z * 0.5
+            ),
             colour,
             scale,
           })
@@ -158,7 +159,7 @@ class GaltonBoard {
       this.ballRadius,
       this.ballRadius
     );
-    const colour = new Vector3(255, 255, 255);
+    const colour = new Vector3(1, 1, 1);
 
     for (let i = 0; i < this.maxBallCount; i++) {
       const xOffset = 1 * this.ballRadius * (Math.random() - 0.5);

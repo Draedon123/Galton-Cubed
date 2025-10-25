@@ -1,4 +1,3 @@
-import "./style.css";
 import { Renderer } from "./engine/Renderer";
 import { Loop } from "./utils/Loop";
 import { initialiseConfigPanel } from "./configPanel";

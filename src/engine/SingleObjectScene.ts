@@ -1,5 +1,4 @@
 import { BufferWriter } from "../utils/BufferWriter";
-import { Vector3 } from "../utils/Vector3";
 import type { Mesh } from "./meshes/Mesh";
 import type { Model } from "./meshes/Model";
 import type { Sphere } from "./meshes/Sphere";
@@ -65,7 +64,7 @@ class SingleObjectScene {
       const modelMatrix = object.calculateModelMatrix();
 
       bufferWriter.writeMat4x4f(modelMatrix);
-      bufferWriter.writeVec3f(Vector3.scale(object.colour, 1 / 255));
+      bufferWriter.writeVec3f(object.colour);
       bufferWriter.pad(4);
     }
 

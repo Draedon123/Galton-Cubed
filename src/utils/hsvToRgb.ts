@@ -4,10 +4,10 @@ import { Vector3 } from "./Vector3";
  * @param { number } h 0-360
  * @param { number } s 0-1
  * @param { number } v 0-1
- * @returns { Vector3 } rgb, 0-255
+ * @returns { Vector3 } rgb, 0-1
  */
 function hsvToRgb(h: number, s: number, v: number): Vector3 {
-  const chroma = 255 * s * v;
+  const chroma = s * v;
   const face = h / 60;
   const X = chroma * (1 - Math.abs((face % 2) - 1));
 

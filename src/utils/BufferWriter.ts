@@ -1,4 +1,3 @@
-import type { Matrix3 } from "./Matrix3";
 import type { Matrix4 } from "./Matrix4";
 import type { Vector3 } from "./Vector3";
 
@@ -39,20 +38,9 @@ class BufferWriter {
     this.writeFloat32(vec3f.z);
   }
 
-  public writeMat3x3f(mat3x3f: Matrix3): void {
-    for (let i = 0; i < 9; i++) {
-      this.writeFloat32(mat3x3f.components[i]);
-
-      if (i % 3 === 2) {
-        this.pad(4);
-      }
-    }
-  }
-
   public writeMat4x4f(mat4x4f: Matrix4): void {
-    for (let i = 0; i < 16; i++) {
-      this.writeFloat32(mat4x4f.components[i]);
-    }
+    new Float32Array(this.buffer, this.offset, 16).set(mat4x4f.components);
+    this.offset += 16 * 4;
   }
 
   public pad(bytes: number): void {
