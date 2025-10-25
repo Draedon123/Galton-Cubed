@@ -74,24 +74,40 @@ class Camera {
     const movementSpeed = this.movementSpeed * deltaTime;
 
     if (this.keyboardManager.isKeyDown(this.keybinds.forwards)) {
-      this.position.add(Vector3.scale(this.forward, movementSpeed));
+      const forward = Vector3.clone(this.forward);
+      forward.y = 0;
+      forward.normalise();
+
+      this.position.add(Vector3.scale(forward, movementSpeed));
     }
 
     if (this.keyboardManager.isKeyDown(this.keybinds.backwards)) {
-      this.position.subtract(Vector3.scale(this.forward, movementSpeed));
+      const forward = Vector3.clone(this.forward);
+      forward.y = 0;
+      forward.normalise();
+
+      this.position.subtract(Vector3.scale(forward, movementSpeed));
     }
 
     if (this.keyboardManager.isKeyDown(this.keybinds.left)) {
+      const forward = Vector3.clone(this.forward);
+      forward.y = 0;
+      forward.normalise();
+
       this.position.subtract(
-        Vector3.cross(this.forward, new Vector3(0, 1, 0))
+        Vector3.cross(forward, new Vector3(0, 1, 0))
           .normalise()
           .scale(movementSpeed)
       );
     }
 
     if (this.keyboardManager.isKeyDown(this.keybinds.right)) {
+      const forward = Vector3.clone(this.forward);
+      forward.y = 0;
+      forward.normalise();
+
       this.position.add(
-        Vector3.cross(this.forward, new Vector3(0, 1, 0))
+        Vector3.cross(forward, new Vector3(0, 1, 0))
           .normalise()
           .scale(movementSpeed)
       );

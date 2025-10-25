@@ -118,7 +118,7 @@ class GaltonBoard {
 
   private createFloor(): Model[] {
     const tiles: Model[] = [];
-    const sideLength = this.sideLength * 2;
+    const sideLength = this.sideLength * 2.2;
 
     const corner = Vector3.subtract(
       this.start,
