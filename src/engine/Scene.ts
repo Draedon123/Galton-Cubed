@@ -61,7 +61,7 @@ class Scene {
 
     for (const scene of this.scenes) {
       scene.initialise(this, device);
-      scene.update();
+      scene.updateBuffer();
     }
 
     this.initialised = true;

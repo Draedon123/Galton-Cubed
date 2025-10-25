@@ -9,6 +9,7 @@ class SingleObjectScene {
   public readonly mesh: Sphere;
 
   public scene!: Scene;
+  public drawArgs!: GPUBuffer;
 
   private objects: Model[];
   private initialised: boolean;
@@ -31,12 +32,22 @@ class SingleObjectScene {
     this.scene = scene;
     this.mesh.initialise(device);
 
+    this.drawArgs = device.createBuffer({
+      label: "Draw Arguments",
+      size: 5 * 4,
+      usage:
+        GPUBufferUsage.INDIRECT |
+        GPUBufferUsage.STORAGE |
+        GPUBufferUsage.COPY_DST,
+    });
+
     this.initialised = true;
 
-    this.update();
+    this.updateBuffer();
+    this.updateDrawArgs();
   }
 
-  public update(lastObjects: number = this.objects.length): void {
+  public updateBuffer(lastObjects: number = this.objects.length): void {
     if (!this.initialised) {
       return;
     }
@@ -67,19 +78,38 @@ class SingleObjectScene {
     );
   }
 
-  public addObject(object: Model): void {
+  public addObjects(objects: Model[]): void {
     const sceneIndex = this.scene?.scenes.indexOf(this);
     const maxObjects = this.scene?.maxObjectsPerScene[sceneIndex];
 
-    if (this.objects.length >= maxObjects) {
-      console.warn(
-        `Maximum number of objects reached (${maxObjects}). New objects not added`
-      );
+    for (const object of objects) {
+      if (this.objects.length >= maxObjects) {
+        console.warn(
+          `Maximum number of objects reached (${maxObjects}). New objects not added`
+        );
 
+        break;
+      }
+
+      this.objects.push(object);
+    }
+
+    this.updateDrawArgs();
+  }
+
+  public updateDrawArgs(
+    indexCount: number = this.mesh.indexCount,
+    instanceCount: number = this.objectCount
+  ): void {
+    if (!this.initialised) {
       return;
     }
 
-    this.objects.push(object);
+    this.device.queue.writeBuffer(
+      this.drawArgs,
+      0,
+      new Uint32Array([indexCount, instanceCount])
+    );
   }
 
   public get objectCount(): number {

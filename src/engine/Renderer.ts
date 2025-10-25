@@ -179,6 +179,11 @@ class Renderer {
           buffer: { type: "read-only-storage" },
           visibility: GPUShaderStage.VERTEX,
         },
+        {
+          binding: 5,
+          buffer: { type: "read-only-storage" },
+          visibility: GPUShaderStage.VERTEX,
+        },
       ],
     });
 
@@ -205,6 +210,10 @@ class Renderer {
         {
           binding: 4,
           resource: { buffer: this.board.ballPhysicsShader.heightsBuffer },
+        },
+        {
+          binding: 5,
+          resource: { buffer: this.board.ballPhysicsShader.ballsToDrawBuffer },
         },
       ],
     });
@@ -295,7 +304,7 @@ class Renderer {
 
       renderPass.setBindGroup(0, this.renderBindGroup, [i * 256]);
       scene.mesh.bind(renderPass);
-      renderPass.drawIndexed(scene.mesh.indexCount, scene.objectCount);
+      renderPass.drawIndexedIndirect(scene.drawArgs, 0);
     }
 
     renderPass.end();

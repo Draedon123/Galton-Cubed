@@ -10,6 +10,7 @@ class BallPhysicsShader {
 
   public readonly settingsBuffer: GPUBuffer;
   public readonly heightsBuffer: GPUBuffer;
+  public readonly ballsToDrawBuffer: GPUBuffer;
 
   private readonly device: GPUDevice;
   private readonly board: GaltonBoard;
@@ -60,6 +61,12 @@ class BallPhysicsShader {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
+    this.ballsToDrawBuffer = device.createBuffer({
+      label: "Balls to Draw",
+      size: board.maxBallCount * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+
     const mainBindGroupLayout = device.createBindGroupLayout({
       label: "Ball Physics Shader Bind Group Layout",
       entries: [
@@ -80,6 +87,16 @@ class BallPhysicsShader {
         },
         {
           binding: 3,
+          buffer: { type: "storage" },
+          visibility: GPUShaderStage.COMPUTE,
+        },
+        {
+          binding: 4,
+          buffer: { type: "storage" },
+          visibility: GPUShaderStage.COMPUTE,
+        },
+        {
+          binding: 5,
           buffer: { type: "storage" },
           visibility: GPUShaderStage.COMPUTE,
         },
@@ -105,6 +122,15 @@ class BallPhysicsShader {
         {
           binding: 3,
           resource: { buffer: this.heightsBuffer },
+        },
+        {
+          binding: 4,
+          // sphere
+          resource: { buffer: board.scene.scenes[0].drawArgs },
+        },
+        {
+          binding: 5,
+          resource: { buffer: this.ballsToDrawBuffer },
         },
       ],
     });
@@ -145,6 +171,7 @@ class BallPhysicsShader {
 
   public run(deltaTimeMs: number): void {
     this.updateSettings(deltaTimeMs);
+    this.board.scene.scenes[0].updateDrawArgs(undefined, this.board.pegCount);
 
     const commandEncoder = this.device.createCommandEncoder();
     const computePass = this.gpuTimer.beginComputePass(commandEncoder, {

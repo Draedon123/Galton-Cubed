@@ -58,14 +58,10 @@ class GaltonBoard {
     this.spheres = new SingleObjectScene(new Sphere(10, 1));
     this.floor = new SingleObjectScene(new Cube(1, 1));
 
-    for (const peg of pegs) {
-      this.spheres.addObject(peg);
-    }
+    this.spheres.addObjects(pegs);
 
     const floorTiles = this.createFloor();
-    for (const tile of floorTiles) {
-      this.floor.addObject(tile);
-    }
+    this.floor.addObjects(floorTiles);
 
     this.scene = new Scene(2, [
       this.pegCount + this.maxBallCount,
@@ -168,7 +164,7 @@ class GaltonBoard {
       const xOffset = 1 * this.ballRadius * (Math.random() - 0.5);
       const zOffset = 1 * this.ballRadius * (Math.random() - 0.5);
 
-      this.spheres.addObject(
+      this.spheres.addObjects([
         new Model({
           position: Vector3.add(
             this.start,
@@ -176,10 +172,10 @@ class GaltonBoard {
           ),
           scale,
           colour,
-        })
-      );
+        }),
+      ]);
 
-      this.spheres.update(1);
+      this.spheres.updateBuffer(1);
       yield;
     }
   }
