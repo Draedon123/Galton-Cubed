@@ -1,40 +1,37 @@
 import { BufferWriter } from "../utils/BufferWriter";
 import { Vector3 } from "../utils/Vector3";
+import type { Mesh } from "./meshes/Mesh";
 import type { Model } from "./meshes/Model";
-import { Sphere } from "./meshes/Sphere";
+import type { Sphere } from "./meshes/Sphere";
+import { Scene } from "./Scene";
 
-class BallScene {
+class SingleObjectScene {
   public readonly mesh: Sphere;
 
-  public sceneBuffer!: GPUBuffer;
   public objects: Model[];
+  public scene!: Scene;
 
   private initialised: boolean;
   private device!: GPUDevice;
 
-  private readonly maxObjects: number;
-  constructor(maxObjects: number) {
+  constructor(mesh: Mesh) {
     this.initialised = false;
-    this.maxObjects = maxObjects;
     this.objects = [];
-    this.mesh = new Sphere(15, 1);
+    this.mesh = mesh;
   }
 
-  public initialise(device: GPUDevice): void {
+  public initialise(scene: Scene, device: GPUDevice): void {
     if (this.initialised) {
       return;
     }
 
     this.device = device;
+    this.scene = scene;
     this.mesh.initialise(device);
 
-    this.sceneBuffer = device.createBuffer({
-      label: "Ball Scene Buffer",
-      size: this.byteLength,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    });
-
     this.initialised = true;
+
+    this.update();
   }
 
   public update(lastObjects: number = this.objects.length): void {
@@ -43,12 +40,14 @@ class BallScene {
     }
 
     this.device.queue.writeBuffer(
-      this.sceneBuffer,
-      0,
+      this.scene.sceneBuffer,
+      this.sceneByteOffset,
       new Uint32Array([this.objects.length, 0, 0, 0])
     );
 
-    const bufferWriter = new BufferWriter(lastObjects * this.ballByteLength);
+    const bufferWriter = new BufferWriter(
+      lastObjects * SingleObjectScene.objectByteLength
+    );
 
     for (
       let i = this.objects.length - lastObjects;
@@ -64,19 +63,30 @@ class BallScene {
     }
 
     this.device.queue.writeBuffer(
-      this.sceneBuffer,
-      16 + (this.objects.length - lastObjects) * this.ballByteLength,
+      this.scene.sceneBuffer,
+      16 +
+        (this.objects.length - lastObjects) *
+          SingleObjectScene.objectByteLength +
+        this.sceneByteOffset,
       bufferWriter.buffer
     );
   }
 
-  public get byteLength(): number {
-    return 16 + this.maxObjects * this.ballByteLength;
+  private get sceneByteOffset(): number {
+    const sceneIndex = this.scene.scenes.indexOf(this);
+
+    return sceneIndex * this.byteLength;
   }
 
-  public get ballByteLength(): number {
+  public get byteLength(): number {
+    return (
+      16 + this.scene.maxObjectsPerScene * SingleObjectScene.objectByteLength
+    );
+  }
+
+  public static get objectByteLength(): number {
     return (16 + 4) * 4;
   }
 }
 
-export { BallScene };
+export { SingleObjectScene };

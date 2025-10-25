@@ -1,19 +1,18 @@
 import { GPUTimer } from "../utils/GPUTimer";
 import { Matrix4Buffer } from "../utils/Matrix4Buffer";
 import { resolveBasePath } from "../utils/resolveBasePath";
-import { BallScene } from "./BallScene";
 import { Camera, type CameraOptions } from "./Camera";
 import { Shader } from "./Shader";
+import { Scene } from "./Scene";
 
 type RendererSettings = {
   cameraOptions: Partial<CameraOptions>;
-  scene: BallScene;
 };
 
 class Renderer {
   public readonly canvas: HTMLCanvasElement;
   public readonly camera: Camera;
-  public readonly ballScene: BallScene;
+  public readonly scenes: Scene;
   public readonly device: GPUDevice;
 
   private readonly ctx: GPUCanvasContext;
@@ -44,7 +43,7 @@ class Renderer {
     this.ctx = ctx;
     this.canvasFormat = "rgba8unorm";
     this.camera = new Camera(settings.cameraOptions);
-    this.ballScene = settings.scene ?? new BallScene(100);
+    this.scenes = new Scene(1000, 2);
 
     const frameTimeElement = document.getElementById(
       "renderFrameTime"
@@ -83,8 +82,7 @@ class Renderer {
       return;
     }
 
-    this.ballScene.initialise(this.device);
-    this.ballScene.update();
+    this.scenes.initialise(this.device);
 
     await this.initialiseRendering();
 
@@ -154,7 +152,7 @@ class Renderer {
         },
         {
           binding: 1,
-          resource: { buffer: this.ballScene.sceneBuffer },
+          resource: { buffer: this.scenes.sceneBuffer },
         },
       ],
     });
@@ -234,13 +232,13 @@ class Renderer {
       },
     });
 
-    this.ballScene.mesh.bind(renderPass);
     renderPass.setBindGroup(0, this.renderBindGroup);
     renderPass.setPipeline(this.renderPipeline);
-    renderPass.drawIndexed(
-      this.ballScene.mesh.indexCount,
-      this.ballScene.objects.length
-    );
+
+    for (const scene of this.scenes.scenes) {
+      scene.mesh.bind(renderPass);
+      renderPass.drawIndexed(scene.mesh.indexCount, scene.objects.length);
+    }
 
     renderPass.end();
     this.device.queue.submit([commandEncoder.finish()]);

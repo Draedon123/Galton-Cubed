@@ -1,8 +1,10 @@
-import { BallScene } from "./engine/BallScene";
+import { SingleObjectScene } from "./engine/SingleObjectScene";
 import { BallPhysicsShader } from "./engine/BallPhysicsShader";
 import { Model } from "./engine/meshes/Model";
 import { hsvToRgb } from "./utils/hsvToRgb";
 import { Vector3 } from "./utils/Vector3";
+import { Sphere } from "./engine/meshes/Sphere";
+import type { Renderer } from "./engine/Renderer";
 
 type GaltonBoardOptions = {
   layers: number;
@@ -15,7 +17,7 @@ type GaltonBoardOptions = {
 };
 
 class GaltonBoard {
-  public readonly scene: BallScene;
+  public readonly scene: SingleObjectScene;
   public readonly maxBallCount: number;
   public readonly pegCount: number;
   public readonly ballRadius: number;
@@ -40,7 +42,7 @@ class GaltonBoard {
 
     this.pegCount = pegs.length;
 
-    this.scene = new BallScene(this.pegCount + this.maxBallCount);
+    this.scene = new SingleObjectScene(new Sphere(15, 1));
 
     for (const peg of pegs) {
       this.scene.objects.push(peg);
@@ -125,12 +127,17 @@ class GaltonBoard {
     this.ballPhysicsShader.run(deltaTimeMs);
   }
 
-  public async initialise(device: GPUDevice): Promise<void> {
+  public async initialise(renderer: Renderer): Promise<void> {
     if (this.initialised) {
       return;
     }
 
-    this.ballPhysicsShader = await BallPhysicsShader.create(device, this);
+    renderer.scenes.scenes.push(this.scene);
+    this.scene.initialise(renderer.scenes, renderer.device);
+    this.ballPhysicsShader = await BallPhysicsShader.create(
+      renderer.device,
+      this
+    );
 
     this.initialised = true;
   }

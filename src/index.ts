@@ -14,7 +14,6 @@ async function main(): Promise<void> {
     pegRadius: 3,
   });
   const renderer = await Renderer.create(canvas, {
-    scene: board.scene,
     cameraOptions: {
       mouseSensitivity: 0.1,
       movementSpeed: 0.1,
@@ -22,7 +21,7 @@ async function main(): Promise<void> {
   });
 
   await renderer.initialise();
-  await board.initialise(renderer.device);
+  await board.initialise(renderer);
 
   renderer.camera.position = new Vector3(0, 10, 20);
   renderer.camera.fovDegrees = 60;
@@ -69,6 +68,5 @@ main().catch((error) => {
   chevron?.classList.add("collapsed");
   panel?.classList.add("collapsed");
 
-  console.trace();
   console.error(errorMessage);
 });

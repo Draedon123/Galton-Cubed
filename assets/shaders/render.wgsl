@@ -1,4 +1,4 @@
-#!import balls
+#!import objects
 
 struct Vertex {
   @location(0) position: vec3f,
@@ -13,7 +13,7 @@ struct VertexOutput {
 }
 
 @group(0) @binding(0) var <uniform> perspectiveViewMatrix: mat4x4f;
-@group(0) @binding(1) var <storage> balls: Balls;
+@group(0) @binding(1) var <storage> balls: Objects;
 
 const LIGHT_DIRECTION: vec3f = normalize(vec3f(1.0, 1.0, 1.0));
 const AMBIENT_STRENGTH: f32 = 0.1;
@@ -23,7 +23,7 @@ const AMBIENT_COLOUR: vec3f = vec3f(1.0);
 fn vertexMain(vertex: Vertex) -> VertexOutput {
   var output: VertexOutput;
 
-  let ball = balls.balls[vertex.index];
+  let ball = balls.objects[vertex.index];
   output.position = perspectiveViewMatrix * ball.modelMatrix * vec4f(vertex.position, 1.0);
   output.normal = vertex.normal;
   output.colour = ball.colour;
