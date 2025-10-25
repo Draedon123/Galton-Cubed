@@ -55,7 +55,7 @@ class GaltonBoard {
 
     this.pegCount = pegs.length;
 
-    this.spheres = new SingleObjectScene(new Sphere(5, 1));
+    this.spheres = new SingleObjectScene(new Sphere(7, 1));
     this.floor = new SingleObjectScene(new Cube(1, 1));
 
     this.spheres.addObjects(pegs);

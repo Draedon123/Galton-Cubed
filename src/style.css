@@ -11,6 +11,8 @@
   font-size: xx-large;
 
   padding: 0 1ch;
+  color: white;
+  text-align: center;
 }
 
 .error {

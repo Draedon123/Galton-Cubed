@@ -187,6 +187,13 @@ class Camera {
 
     this.forward = direction;
   }
+
+  public lookAt(point: Vector3): void {
+    this.forward = Vector3.subtract(point, this.position).normalise();
+
+    this.yaw = degrees(Math.atan2(this.forward.z, this.forward.x));
+    this.pitch = degrees(Math.asin(this.forward.y));
+  }
 }
 
 export { Camera };

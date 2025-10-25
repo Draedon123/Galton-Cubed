@@ -5,6 +5,10 @@ import { Vector3 } from "./utils/Vector3";
 import { GaltonBoard } from "./GaltonBoard";
 
 async function main(): Promise<void> {
+  const message = document.getElementById("message") as HTMLElement;
+
+  message.style.zIndex = "2";
+
   const canvas = document.getElementById("main") as HTMLCanvasElement;
 
   const board = new GaltonBoard({
@@ -12,8 +16,8 @@ async function main(): Promise<void> {
     layers: 9,
     pegRadius: 4,
     floorResolution: 320,
-    floorOffset: 100,
-    sideLength: 125,
+    floorOffset: 70,
+    sideLength: 120,
   });
   const renderer = await Renderer.create(canvas, {
     scene: board.scene,
@@ -26,8 +30,13 @@ async function main(): Promise<void> {
   await board.initialise(renderer.device);
   await renderer.initialise(board);
 
-  renderer.camera.position = new Vector3(0, 10, 20);
+  renderer.camera.position = new Vector3(
+    board.floorResolution * 0.35,
+    10,
+    board.floorResolution * 0.25
+  );
   renderer.camera.fovDegrees = 60;
+  renderer.camera.lookAt(new Vector3(0, -10 * board.pegRadius, 0));
 
   initialiseConfigPanel(renderer);
 
@@ -52,6 +61,7 @@ async function main(): Promise<void> {
   });
 
   loop.start();
+  message.style.zIndex = "unset";
 
   canvas.addEventListener("click", () => {
     canvas.requestPointerLock();

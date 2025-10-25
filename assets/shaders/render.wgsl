@@ -22,11 +22,11 @@ struct Parameters {
 @group(0) @binding(3) var <uniform> physicsSettings: PhysicsSettings;
 @group(0) @binding(4) var <storage> heights: array<f32>;
 @group(0) @binding(5) var <storage> ballsToDraw: array<u32>;
+@group(0) @binding(6) var skybox: texture_cube<f32>;
+@group(0) @binding(7) var textureSampler: sampler;
 
-
-const HEIGHT_NORMALISATION: f32 = 2.0 * 3.141592653589793;
-
-const LIGHT_DIRECTION: vec3f = normalize(vec3f(0.25, 1.0, 0.25));
+const LIGHT_DIRECTION_1: vec3f = normalize(vec3f(-0.25, 1.0, 0.35));
+const LIGHT_DIRECTION_2: vec3f = normalize(vec3f(0.5, -0.2, -0.75));
 const AMBIENT_STRENGTH: f32 = 0.1;
 const AMBIENT_COLOUR: vec3f = vec3f(1.0);
 
@@ -44,8 +44,9 @@ fn vertexMain(vertex: Vertex) -> VertexOutput {
     let bufferIndex: u32 = getBufferIndex(position.xz, physicsSettings.floorSideLength);
     let height: f32 = heights[bufferIndex];
 
-    object.colour.r -= 0.02 * height;
-    object.colour.g -= 0.03 * height;
+    object.colour.r -= 1.0 - pow(1.0 - (0.010 * height), 4);
+    object.colour.g -= 1.0 - pow(1.0 - (0.020 * height), 4);
+    object.colour.b -= 1.0 - pow(1.0 - (0.005 * height), 4);
 
     // scale Y
     modelMatrix[1].x *= height;
@@ -70,10 +71,12 @@ fn vertexMain(vertex: Vertex) -> VertexOutput {
 
 @fragment
 fn fragmentMain(vertex: VertexOutput) -> @location(0) vec4f {
-  let diffuseStrength: f32 = max(0.0, dot(vertex.normal, LIGHT_DIRECTION));
-  let diffuse: vec3f = diffuseStrength * vertex.colour;
+  let diffuseStrength_1: f32 = max(dot(vertex.normal, LIGHT_DIRECTION_1), 0.0);
+  let diffuseStrength_2: f32 = max(dot(vertex.normal, LIGHT_DIRECTION_2), 0.0);
+  let diffuse: vec3f = min(0.75 * (diffuseStrength_1 + diffuseStrength_2), 1.0) * vertex.colour;
   let ambient: vec3f = AMBIENT_STRENGTH * AMBIENT_COLOUR;
+  let skyboxColour: vec3f = textureSample(skybox, textureSampler, vertex.normal).xyz;
 
-  return vec4f(diffuse + ambient, 1.0);
+  return vec4f(diffuse + ambient + 0.5 * skyboxColour, 1.0);
   // return vec4f((vertex.normal + 1.0) / 2.0, 1.0);
 }

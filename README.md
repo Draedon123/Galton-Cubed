@@ -11,3 +11,5 @@ A simulation of a 3d Galton Board, made without any game engine or rendering lib
 - [Conversion Between Quaternions and Euler Angles](https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles)
 - [glmatrix](https://github.com/toji/gl-matrix)
 - [HSL and HSV](https://en.wikipedia.org/wiki/HSL_and_HSV)
+- [Skybox texture](https://www.eso.org/public/images/eso0932a/)
+- [Panorama to cubemap](https://jaxry.github.io/panorama-to-cubemap/)

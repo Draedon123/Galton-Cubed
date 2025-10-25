@@ -6,6 +6,8 @@ import { Shader } from "./Shader";
 import { Scene } from "./Scene";
 import { BufferWriter } from "../utils/BufferWriter";
 import type { GaltonBoard } from "../GaltonBoard";
+import { Texture } from "./Texture";
+import { SkyboxRenderer } from "./SkyboxRenderer";
 
 type RendererSettings = {
   cameraOptions?: Partial<CameraOptions>;
@@ -28,6 +30,8 @@ class Renderer {
   private renderPipeline!: GPURenderPipeline;
   private depthTexture!: GPUTexture;
   private board!: GaltonBoard;
+
+  private skyboxRenderer!: SkyboxRenderer;
 
   private readonly parametersBuffer!: GPUBuffer;
   private readonly perspectiveViewMatrix: Matrix4Buffer;
@@ -144,6 +148,20 @@ class Renderer {
       format: this.canvasFormat,
     });
 
+    const skybox = await Texture.createCubemap(
+      this.device,
+      "Skybox Texture",
+      "skybox"
+    );
+
+    this.skyboxRenderer = await SkyboxRenderer.create(
+      this.device,
+      this.canvasFormat,
+      "Skybox Renderer"
+    );
+
+    this.skyboxRenderer.addSkybox(skybox);
+
     const shader = await Shader.fetch(
       this.device,
       resolveBasePath("shaders/render.wgsl")
@@ -184,6 +202,16 @@ class Renderer {
           buffer: { type: "read-only-storage" },
           visibility: GPUShaderStage.VERTEX,
         },
+        {
+          binding: 6,
+          texture: { viewDimension: "cube" },
+          visibility: GPUShaderStage.FRAGMENT,
+        },
+        {
+          binding: 7,
+          sampler: {},
+          visibility: GPUShaderStage.FRAGMENT,
+        },
       ],
     });
 
@@ -214,6 +242,16 @@ class Renderer {
         {
           binding: 5,
           resource: { buffer: this.board.ballPhysicsShader.ballsToDrawBuffer },
+        },
+        {
+          binding: 6,
+          resource: skybox.texture.createView({
+            dimension: "cube",
+          }),
+        },
+        {
+          binding: 7,
+          resource: this.skyboxRenderer.sampler,
         },
       ],
     });
@@ -293,6 +331,7 @@ class Renderer {
       },
     });
 
+    this.skyboxRenderer.render(renderPass, this.camera);
     renderPass.setPipeline(this.renderPipeline);
 
     for (let i = 0; i < this.scenes.scenes.length; i++) {
