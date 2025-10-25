@@ -63,6 +63,10 @@ class Vector3 {
     return this;
   }
 
+  public static normalise(vector3: Vector3): Vector3 {
+    return Vector3.clone(vector3).normalise();
+  }
+
   public normalise(): this {
     const magnitude = this.magnitude;
 
@@ -78,6 +82,14 @@ class Vector3 {
     this.components[2] *= inverseMagnitude;
 
     return this;
+  }
+
+  public static clone(vector3: Vector3): Vector3 {
+    return new Vector3(
+      vector3.components[0],
+      vector3.components[1],
+      vector3.components[2]
+    );
   }
 
   public get magnitude(): number {

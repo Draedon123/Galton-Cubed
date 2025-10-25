@@ -9,11 +9,12 @@ class Mesh {
   public vertexBuffer!: GPUBuffer;
   public indexBuffer!: GPUBuffer | null;
 
+  private device!: GPUDevice;
   private vertices!: Float32Array;
   private indices!: Uint16Array | Uint32Array | null;
+  protected rawVertices: Vertex[];
+  protected rawIndices: number[] | null;
 
-  private readonly rawVertices: Vertex[];
-  private readonly rawIndices: number[] | null;
   private readonly label: string;
   constructor(
     rawVertices: Vertex[],
@@ -26,8 +27,22 @@ class Mesh {
   }
 
   public initialise(device: GPUDevice): void {
+    this.device = device;
+
+    this.update(this.rawVertices, this.rawIndices ?? undefined, true);
+  }
+
+  public update(
+    rawVertices: Vertex[],
+    rawIndices?: number[],
+    forceRecreateBuffers: boolean = false
+  ): void {
+    if (!this.device) {
+      return;
+    }
+
     this.vertices = new Float32Array(
-      this.rawVertices
+      rawVertices
         .map((vertex) => [
           vertex.position.x,
           vertex.position.y,
@@ -39,28 +54,48 @@ class Mesh {
         .flat()
     );
 
-    if (this.rawIndices !== null) {
-      this.indices = new (
-        this.indexFormat === "uint16" ? Uint16Array : Uint32Array
-      )(this.rawIndices);
+    if (
+      rawVertices.length !== this.rawVertices.length ||
+      forceRecreateBuffers
+    ) {
+      this.vertexBuffer?.destroy();
 
-      this.indexBuffer = device.createBuffer({
-        label: `${this.label} Index Buffer`,
-        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-        size: this.indices.byteLength,
+      this.vertexBuffer = this.device.createBuffer({
+        label: `${this.label} Vertex Buffer`,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        size: this.vertices.byteLength,
       });
-      device.queue.writeBuffer(this.indexBuffer, 0, this.indices.buffer);
+    }
+
+    this.device.queue.writeBuffer(this.vertexBuffer, 0, this.vertices.buffer);
+
+    if (rawIndices !== undefined) {
+      const IndexArray =
+        this.indexFormat === "uint16" ? Uint16Array : Uint32Array;
+      this.indices = new IndexArray(rawIndices);
+
+      if (
+        this.rawIndices?.length !== rawIndices.length ||
+        forceRecreateBuffers
+      ) {
+        this.indexBuffer?.destroy();
+
+        this.indexBuffer = this.device.createBuffer({
+          label: `${this.label} Index Buffer`,
+          usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+          size: this.indices.byteLength,
+        });
+      }
+
+      this.device.queue.writeBuffer(
+        this.indexBuffer as GPUBuffer,
+        0,
+        this.indices.buffer
+      );
     } else {
       this.indices = null;
       this.indexBuffer = null;
     }
-
-    this.vertexBuffer = device.createBuffer({
-      label: `${this.label} Vertex Buffer`,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      size: this.vertices.byteLength,
-    });
-    device.queue.writeBuffer(this.vertexBuffer, 0, this.vertices.buffer);
   }
 
   public render(renderPass: GPURenderPassEncoder): void {
