@@ -36,6 +36,7 @@ class Scene {
 
       return this.scenes.length;
     };
+
     this.initialised = false;
   }
 

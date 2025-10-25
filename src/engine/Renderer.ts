@@ -4,6 +4,7 @@ import { resolveBasePath } from "../utils/resolveBasePath";
 import { Camera, type CameraOptions } from "./Camera";
 import { Shader } from "./Shader";
 import { Scene } from "./Scene";
+import { BufferWriter } from "../utils/BufferWriter";
 
 type RendererSettings = {
   cameraOptions?: Partial<CameraOptions>;
@@ -26,6 +27,7 @@ class Renderer {
   private renderPipeline!: GPURenderPipeline;
   private depthTexture!: GPUTexture;
 
+  private readonly parametersBuffer!: GPUBuffer;
   private readonly perspectiveViewMatrix: Matrix4Buffer;
 
   private constructor(
@@ -70,6 +72,12 @@ class Renderer {
       fpsElement.textContent = "[Not supported by browser]";
     }
 
+    this.parametersBuffer = device.createBuffer({
+      label: "Parameters Buffer",
+      size: this.scenes.maxScenes * 256,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
     this.perspectiveViewMatrix = new Matrix4Buffer(
       device,
       "Perspective View Matrix"
@@ -86,6 +94,21 @@ class Renderer {
     this.scenes.initialise(this.device);
 
     await this.initialiseRendering();
+
+    const bufferWriter = new BufferWriter(this.scenes.maxScenes * 256);
+
+    for (let i = 0; i < this.scenes.maxObjectsPerScene.length; i++) {
+      const maxObjects = this.scenes.maxObjectsPerScene[i - 1] ?? 0;
+
+      bufferWriter.writeUint32(maxObjects);
+      bufferWriter.pad(256 - 4);
+    }
+
+    this.device.queue.writeBuffer(
+      this.parametersBuffer,
+      0,
+      bufferWriter.buffer
+    );
 
     new ResizeObserver((entries) => {
       const canvas = entries[0];
@@ -140,6 +163,11 @@ class Renderer {
           buffer: { type: "read-only-storage" },
           visibility: GPUShaderStage.VERTEX,
         },
+        {
+          binding: 2,
+          buffer: { type: "uniform", hasDynamicOffset: true },
+          visibility: GPUShaderStage.VERTEX,
+        },
       ],
     });
 
@@ -154,6 +182,10 @@ class Renderer {
         {
           binding: 1,
           resource: { buffer: this.scenes.sceneBuffer },
+        },
+        {
+          binding: 2,
+          resource: { buffer: this.parametersBuffer, size: 256 },
         },
       ],
     });
@@ -233,14 +265,16 @@ class Renderer {
       },
     });
 
-    renderPass.setBindGroup(0, this.renderBindGroup);
     renderPass.setPipeline(this.renderPipeline);
 
-    for (const scene of this.scenes.scenes) {
+    for (let i = 0; i < this.scenes.scenes.length; i++) {
+      const scene = this.scenes.scenes[i];
+
       if (scene.objectCount === 0) {
         continue;
       }
 
+      renderPass.setBindGroup(0, this.renderBindGroup, [i * 256]);
       scene.mesh.bind(renderPass);
       renderPass.drawIndexed(scene.mesh.indexCount, scene.objectCount);
     }

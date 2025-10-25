@@ -2,9 +2,12 @@ import type { GaltonBoard } from "../GaltonBoard";
 import { BufferWriter } from "../utils/BufferWriter";
 import { GPUTimer } from "../utils/GPUTimer";
 import { resolveBasePath } from "../utils/resolveBasePath";
+import { roundUp } from "../utils/roundUp";
 import { Shader } from "./Shader";
 
 class BallPhysicsShader {
+  private static readonly SETTINGS_BYTE_LENGTH: number = roundUp(6 * 4, 16);
+
   private readonly device: GPUDevice;
   private readonly board: GaltonBoard;
   private readonly gpuTimer: GPUTimer;
@@ -36,20 +39,11 @@ class BallPhysicsShader {
       frameTimeElement.textContent = frameTime;
     });
 
-    const SETTINGS_BYTE_LENGTH = 4 * 4;
     this.settingsBuffer = device.createBuffer({
       label: "Ball Physics Shader Settings Buffer",
-      size: SETTINGS_BYTE_LENGTH,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+      size: BallPhysicsShader.SETTINGS_BYTE_LENGTH,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
-
-    const settings = new BufferWriter(SETTINGS_BYTE_LENGTH);
-    settings.writeFloat32(0);
-    settings.writeUint32(board.pegCount);
-    settings.writeFloat32(board.pegRadius);
-    settings.writeFloat32(board.ballRadius);
-
-    device.queue.writeBuffer(this.settingsBuffer, 0, settings.buffer);
 
     // don't need to write to buffer since velocities will initialise to 0
     this.ballVelocitiesBuffer = device.createBuffer({
@@ -63,7 +57,7 @@ class BallPhysicsShader {
       entries: [
         {
           binding: 0,
-          buffer: { type: "read-only-storage" },
+          buffer: { type: "uniform" },
           visibility: GPUShaderStage.COMPUTE,
         },
         {
@@ -112,12 +106,26 @@ class BallPhysicsShader {
     });
   }
 
-  public run(deltaTimeMs: number): void {
-    this.device.queue.writeBuffer(
-      this.settingsBuffer,
-      0,
-      new Float32Array([deltaTimeMs])
+  private updateSettings(deltaTimeMs: number): void {
+    const settings = new BufferWriter(BallPhysicsShader.SETTINGS_BYTE_LENGTH);
+    settings.writeFloat32(deltaTimeMs);
+    settings.writeUint32(this.board.pegCount);
+    settings.writeFloat32(this.board.pegRadius);
+    settings.writeFloat32(this.board.ballRadius);
+    settings.writeUint32(this.board.ballCount);
+    settings.writeFloat32(
+      this.board.start.y -
+        this.board.height -
+        this.board.floorOffset +
+        this.board.ballRadius +
+        this.board.floorThickness
     );
+
+    this.device.queue.writeBuffer(this.settingsBuffer, 0, settings.buffer);
+  }
+
+  public run(deltaTimeMs: number): void {
+    this.updateSettings(deltaTimeMs);
 
     const commandEncoder = this.device.createCommandEncoder();
     const computePass = this.gpuTimer.beginComputePass(commandEncoder, {

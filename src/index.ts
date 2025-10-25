@@ -12,6 +12,7 @@ async function main(): Promise<void> {
     ballCount: 10000,
     layers: 8,
     pegRadius: 3,
+    floorResolution: 256,
   });
   const renderer = await Renderer.create(canvas, {
     scene: board.scene,
@@ -22,7 +23,7 @@ async function main(): Promise<void> {
   });
 
   await renderer.initialise();
-  await board.initialise(renderer);
+  await board.initialise(renderer.device);
 
   renderer.camera.position = new Vector3(0, 10, 20);
   renderer.camera.fovDegrees = 60;

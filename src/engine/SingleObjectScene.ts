@@ -25,6 +25,8 @@ class SingleObjectScene {
       return;
     }
 
+    scene.scenes.push(this);
+
     this.device = device;
     this.scene = scene;
     this.mesh.initialise(device);
@@ -38,12 +40,6 @@ class SingleObjectScene {
     if (!this.initialised) {
       return;
     }
-
-    this.device.queue.writeBuffer(
-      this.scene.sceneBuffer,
-      this.sceneByteOffset,
-      new Uint32Array([this.objects.length, 0, 0, 0])
-    );
 
     const bufferWriter = new BufferWriter(
       lastObjects * SingleObjectScene.objectByteLength
@@ -64,10 +60,9 @@ class SingleObjectScene {
 
     this.device.queue.writeBuffer(
       this.scene.sceneBuffer,
-      16 +
+      this.sceneByteOffset +
         (this.objects.length - lastObjects) *
-          SingleObjectScene.objectByteLength +
-        this.sceneByteOffset,
+          SingleObjectScene.objectByteLength,
       bufferWriter.buffer
     );
   }
@@ -75,6 +70,7 @@ class SingleObjectScene {
   public addObject(object: Model): void {
     const sceneIndex = this.scene?.scenes.indexOf(this);
     const maxObjects = this.scene?.maxObjectsPerScene[sceneIndex];
+
     if (this.objects.length >= maxObjects) {
       console.warn(
         `Maximum number of objects reached (${maxObjects}). New objects not added`
@@ -93,15 +89,18 @@ class SingleObjectScene {
   private get sceneByteOffset(): number {
     const sceneIndex = this.scene.scenes.indexOf(this);
 
-    return sceneIndex * this.byteLength;
+    return this.scene.scenes.reduce(
+      (total, scene, i) => (i >= sceneIndex ? total : total + scene.byteLength),
+      0
+    );
+  }
+
+  private get maxObjects(): number {
+    return this.scene.maxObjectsPerScene[this.scene.scenes.indexOf(this)];
   }
 
   public get byteLength(): number {
-    return (
-      16 +
-      this.scene.maxObjectsPerScene[this.scene.scenes.indexOf(this)] *
-        SingleObjectScene.objectByteLength
-    );
+    return this.maxObjects * SingleObjectScene.objectByteLength;
   }
 
   public static get objectByteLength(): number {

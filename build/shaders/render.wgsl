@@ -12,8 +12,13 @@ struct VertexOutput {
   @location(1) colour: vec3f,
 }
 
+struct Parameters {
+  objectOffset: u32,
+}
+
 @group(0) @binding(0) var <uniform> perspectiveViewMatrix: mat4x4f;
-@group(0) @binding(1) var <storage> balls: Objects;
+@group(0) @binding(1) var <storage> objects: array<Object>;
+@group(0) @binding(2) var <uniform> parameters: Parameters;
 
 const LIGHT_DIRECTION: vec3f = normalize(vec3f(1.0, 1.0, 1.0));
 const AMBIENT_STRENGTH: f32 = 0.1;
@@ -23,10 +28,11 @@ const AMBIENT_COLOUR: vec3f = vec3f(1.0);
 fn vertexMain(vertex: Vertex) -> VertexOutput {
   var output: VertexOutput;
 
-  let ball = balls.objects[vertex.index];
-  output.position = perspectiveViewMatrix * ball.modelMatrix * vec4f(vertex.position, 1.0);
+  let object = objects[vertex.index + parameters.objectOffset];
+
+  output.position = perspectiveViewMatrix * object.modelMatrix * vec4f(vertex.position, 1.0);
   output.normal = vertex.normal;
-  output.colour = ball.colour;
+  output.colour = object.colour;
 
   return output;
 }
