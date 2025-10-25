@@ -1,7 +1,7 @@
 import { SingleObjectScene } from "./SingleObjectScene";
 
 class Scene {
-  public readonly maxObjectsPerScene: number;
+  public readonly maxObjectsPerScene: Readonly<number[]>;
   public readonly maxScenes: number;
   /** do not reorder */
   public readonly scenes: SingleObjectScene[];
@@ -10,8 +10,14 @@ class Scene {
 
   private initialised: boolean;
   // private device!: GPUDevice;
-  constructor(maxObjectsPerScene: number, maxScenes: number) {
-    this.maxObjectsPerScene = maxObjectsPerScene;
+  constructor(maxScenes: number, maxObjectsPerScene: number[] | number = 128) {
+    this.maxObjectsPerScene =
+      typeof maxObjectsPerScene === "number"
+        ? new Array(maxScenes).fill(0).map(() => maxObjectsPerScene)
+        : Array.from(
+            { length: maxScenes },
+            (_, i) => maxObjectsPerScene[i] ?? 128
+          );
     this.maxScenes = maxScenes;
     this.scenes = [];
 
@@ -44,7 +50,10 @@ class Scene {
       label: "Scene Buffer",
       size:
         this.maxScenes *
-        this.maxObjectsPerScene *
+        this.maxObjectsPerScene.reduce(
+          (total, maxObjects) => total + maxObjects,
+          0
+        ) *
         SingleObjectScene.objectByteLength,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });

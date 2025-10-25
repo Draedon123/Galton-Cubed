@@ -73,8 +73,12 @@ class SingleObjectScene {
   }
 
   public addObject(object: Model): void {
-    if (this.objects.length >= this.scene?.maxObjectsPerScene) {
-      console.warn("Maximum number of objects reached. New objects not added");
+    const sceneIndex = this.scene?.scenes.indexOf(this);
+    const maxObjects = this.scene?.maxObjectsPerScene[sceneIndex];
+    if (this.objects.length >= maxObjects) {
+      console.warn(
+        `Maximum number of objects reached (${maxObjects}). New objects not added`
+      );
 
       return;
     }
@@ -94,7 +98,9 @@ class SingleObjectScene {
 
   public get byteLength(): number {
     return (
-      16 + this.scene.maxObjectsPerScene * SingleObjectScene.objectByteLength
+      16 +
+      this.scene.maxObjectsPerScene[this.scene.scenes.indexOf(this)] *
+        SingleObjectScene.objectByteLength
     );
   }
 

@@ -6,6 +6,7 @@ import { Vector3 } from "./utils/Vector3";
 import { Sphere } from "./engine/meshes/Sphere";
 import type { Renderer } from "./engine/Renderer";
 import { Cube } from "./engine/meshes/Cube";
+import { Scene } from "./engine/Scene";
 
 type GaltonBoardOptions = {
   layers: number;
@@ -18,6 +19,7 @@ type GaltonBoardOptions = {
 };
 
 class GaltonBoard {
+  public readonly scene: Scene;
   public readonly spheres: SingleObjectScene;
   public readonly floor: SingleObjectScene;
   public readonly maxBallCount: number;
@@ -50,6 +52,9 @@ class GaltonBoard {
     for (const peg of pegs) {
       this.spheres.addObject(peg);
     }
+
+    this.scene = new Scene(2, [this.pegCount + this.maxBallCount, 256]);
+    this.scene.scenes.push(this.spheres, this.floor);
   }
 
   public get ballCount(): number {
@@ -135,7 +140,6 @@ class GaltonBoard {
       return;
     }
 
-    renderer.scenes.scenes.push(this.spheres, this.floor);
     this.spheres.initialise(renderer.scenes, renderer.device);
     this.floor.initialise(renderer.scenes, renderer.device);
     this.ballPhysicsShader = await BallPhysicsShader.create(

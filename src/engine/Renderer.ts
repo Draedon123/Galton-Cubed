@@ -6,7 +6,8 @@ import { Shader } from "./Shader";
 import { Scene } from "./Scene";
 
 type RendererSettings = {
-  cameraOptions: Partial<CameraOptions>;
+  cameraOptions?: Partial<CameraOptions>;
+  scene: Scene;
 };
 
 class Renderer {
@@ -29,7 +30,7 @@ class Renderer {
 
   private constructor(
     canvas: HTMLCanvasElement,
-    settings: Partial<RendererSettings>,
+    settings: RendererSettings,
     device: GPUDevice
   ) {
     const ctx = canvas.getContext("webgpu");
@@ -43,7 +44,7 @@ class Renderer {
     this.ctx = ctx;
     this.canvasFormat = "rgba8unorm";
     this.camera = new Camera(settings.cameraOptions);
-    this.scenes = new Scene(1000, 2);
+    this.scenes = settings.scene;
 
     const frameTimeElement = document.getElementById(
       "renderFrameTime"
@@ -250,7 +251,7 @@ class Renderer {
 
   public static async create(
     canvas: HTMLCanvasElement,
-    settings: Partial<RendererSettings> = {}
+    settings: RendererSettings
   ): Promise<Renderer> {
     if (!("gpu" in navigator)) {
       throw new Error("WebGPU not supported");

@@ -14,6 +14,7 @@ async function main(): Promise<void> {
     pegRadius: 3,
   });
   const renderer = await Renderer.create(canvas, {
+    scene: board.scene,
     cameraOptions: {
       mouseSensitivity: 0.1,
       movementSpeed: 0.1,
