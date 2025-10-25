@@ -3,9 +3,7 @@
 @group(0) @binding(0) var <uniform> settings: PhysicsSettings;
 @group(0) @binding(1) var <storage, read_write> objects: array<Object>;
 @group(0) @binding(2) var <storage, read_write> ballVelocities: array<vec3f>;
-
-@group(1) @binding(0) var densityMapIn: texture_storage_2d<r32uint, read>;
-@group(1) @binding(1) var densityMapOut: texture_storage_2d<r32uint, write>;
+@group(0) @binding(3) var <storage, read_write> heights: array<f32>;
 
 const RESTITUTION: f32 = 0.5;
 const GRAVITY: f32 = -100.0;
@@ -27,8 +25,8 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
     position.y = -2e10;
     setPosition(&objects[ballIndex].modelMatrix, position);
 
-    let texturePosition: vec2u = getTexturePosition(position.xz, settings.floorSideLength, textureDimensions(densityMapIn));
-    textureStore(densityMapOut, texturePosition, vec4u(textureLoad(densityMapIn, texturePosition).r + 1));
+    let bufferIndex: u32 = getBufferIndex(position.xz, settings.floorSideLength);
+    heights[bufferIndex] += 1;
 
     return;
   }

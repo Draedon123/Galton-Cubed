@@ -20,10 +20,11 @@ struct Parameters {
 @group(0) @binding(1) var <storage> objects: array<Object>;
 @group(0) @binding(2) var <uniform> parameters: Parameters;
 @group(0) @binding(3) var <uniform> physicsSettings: PhysicsSettings;
+@group(0) @binding(4) var <storage> heights: array<f32>;
 
-@group(1) @binding(0) var densityMapIn: texture_storage_2d<r32uint, read>;
+const HEIGHT_NORMALISATION: f32 = 2.0 * 3.141592653589793;
 
-const LIGHT_DIRECTION: vec3f = normalize(vec3f(1.0, 1.0, 1.0));
+const LIGHT_DIRECTION: vec3f = normalize(vec3f(0.25, 1.0, 0.25));
 const AMBIENT_STRENGTH: f32 = 0.1;
 const AMBIENT_COLOUR: vec3f = vec3f(1.0);
 
@@ -35,16 +36,19 @@ fn vertexMain(vertex: Vertex) -> VertexOutput {
   var modelMatrix: mat4x4f = object.modelMatrix;
 
   if(parameters.objectOffset > 0){
-    // is a cube (floor)
+    // is a cube (part of the floor)
 
     let position: vec3f = extractPosition(object.modelMatrix);
-    let texturePosition: vec2u = getTexturePosition(position.xz, physicsSettings.floorSideLength, textureDimensions(densityMapIn));
-    let height: f32 = f32(textureLoad(densityMapIn, texturePosition).r);
+    let bufferIndex: u32 = getBufferIndex(position.xz, physicsSettings.floorSideLength);
+    let height: f32 = heights[bufferIndex] / 2.0;
 
     // scale Y
     modelMatrix[1].x *= height;
     modelMatrix[1].y *= height;
     modelMatrix[1].z *= height;
+
+    // translate Y
+    modelMatrix[3][1] += (modelMatrix[1].y - 1.0) / 2.0;
   }
 
   output.position = perspectiveViewMatrix * modelMatrix * vec4f(vertex.position, 1.0);

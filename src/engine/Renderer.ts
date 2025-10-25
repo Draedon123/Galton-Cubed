@@ -174,6 +174,11 @@ class Renderer {
           buffer: { type: "uniform" },
           visibility: GPUShaderStage.VERTEX,
         },
+        {
+          binding: 4,
+          buffer: { type: "read-only-storage" },
+          visibility: GPUShaderStage.VERTEX,
+        },
       ],
     });
 
@@ -197,15 +202,16 @@ class Renderer {
           binding: 3,
           resource: { buffer: this.board.ballPhysicsShader.settingsBuffer },
         },
+        {
+          binding: 4,
+          resource: { buffer: this.board.ballPhysicsShader.heightsBuffer },
+        },
       ],
     });
 
     const pipelineLayout = this.device.createPipelineLayout({
       label: "Renderer Render Pipeline Layout",
-      bindGroupLayouts: [
-        renderBindGroupLayout,
-        this.board.ballPhysicsShader.probabilityMapTexture.bindGroupLayout,
-      ],
+      bindGroupLayouts: [renderBindGroupLayout],
     });
 
     this.renderPipeline = this.device.createRenderPipeline({
@@ -288,12 +294,6 @@ class Renderer {
       }
 
       renderPass.setBindGroup(0, this.renderBindGroup, [i * 256]);
-      renderPass.setBindGroup(
-        1,
-        this.board.ballPhysicsShader.probabilityMapTexture.bindGroups[
-          this.board.ballPhysicsShader.probabilityMapTexture.state
-        ]
-      );
       scene.mesh.bind(renderPass);
       renderPass.drawIndexed(scene.mesh.indexCount, scene.objectCount);
     }

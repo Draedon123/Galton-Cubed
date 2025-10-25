@@ -9,7 +9,7 @@ async function main(): Promise<void> {
   const canvas = document.getElementById("main") as HTMLCanvasElement;
 
   const board = new GaltonBoard({
-    ballCount: 10000,
+    ballCount: 30000,
     layers: 8,
     pegRadius: 3,
     floorResolution: 256,
@@ -36,7 +36,7 @@ async function main(): Promise<void> {
   let result = generator.next();
 
   const spawnFrames = 1;
-  const ballsPerSpawnWave = 3;
+  const ballsPerSpawnWave = 10;
   loop.addCallback((frame) => {
     if (!result.done && frame.frame % spawnFrames === spawnFrames - 1) {
       for (let i = 0; i < ballsPerSpawnWave; i++) {

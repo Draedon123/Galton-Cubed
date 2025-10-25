@@ -1,7 +1,6 @@
 import type { GaltonBoard } from "../GaltonBoard";
 import { BufferWriter } from "../utils/BufferWriter";
 import { GPUTimer } from "../utils/GPUTimer";
-import { PingPongTexture } from "../utils/PingPongTexture";
 import { resolveBasePath } from "../utils/resolveBasePath";
 import { roundUp } from "../utils/roundUp";
 import { Shader } from "./Shader";
@@ -9,8 +8,8 @@ import { Shader } from "./Shader";
 class BallPhysicsShader {
   private static readonly SETTINGS_BYTE_LENGTH: number = roundUp(7 * 4, 16);
 
-  public readonly probabilityMapTexture: PingPongTexture;
   public readonly settingsBuffer: GPUBuffer;
+  public readonly heightsBuffer: GPUBuffer;
 
   private readonly device: GPUDevice;
   private readonly board: GaltonBoard;
@@ -23,13 +22,6 @@ class BallPhysicsShader {
   constructor(shader: Shader, device: GPUDevice, board: GaltonBoard) {
     this.device = device;
     this.board = board;
-
-    this.probabilityMapTexture = new PingPongTexture(device, "Probability Map");
-    this.probabilityMapTexture.createTextures({
-      format: "r32uint",
-      size: [board.floorResolution, board.floorResolution],
-      usage: GPUTextureUsage.STORAGE_BINDING,
-    });
 
     const frameTimeElement = document.getElementById(
       "computeFrameTime"
@@ -53,6 +45,12 @@ class BallPhysicsShader {
       label: "Ball Physics Shader Settings Buffer",
       size: BallPhysicsShader.SETTINGS_BYTE_LENGTH,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
+    this.heightsBuffer = device.createBuffer({
+      label: "Heights Buffer",
+      size: 4 * board.floorResolution * board.floorResolution,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
     // don't need to write to buffer since velocities will initialise to 0
@@ -80,6 +78,11 @@ class BallPhysicsShader {
           buffer: { type: "storage" },
           visibility: GPUShaderStage.COMPUTE,
         },
+        {
+          binding: 3,
+          buffer: { type: "storage" },
+          visibility: GPUShaderStage.COMPUTE,
+        },
       ],
     });
 
@@ -99,15 +102,16 @@ class BallPhysicsShader {
           binding: 2,
           resource: { buffer: this.ballVelocitiesBuffer },
         },
+        {
+          binding: 3,
+          resource: { buffer: this.heightsBuffer },
+        },
       ],
     });
 
     const pipelineLayout = device.createPipelineLayout({
       label: "Ball Physics Shader Compute Pipeline Layout",
-      bindGroupLayouts: [
-        mainBindGroupLayout,
-        this.probabilityMapTexture.bindGroupLayout,
-      ],
+      bindGroupLayouts: [mainBindGroupLayout],
     });
 
     this.computePipeline = device.createComputePipeline({
@@ -148,7 +152,6 @@ class BallPhysicsShader {
     });
 
     computePass.setBindGroup(0, this.bindGroup);
-    computePass.setBindGroup(1, this.probabilityMapTexture.next());
     computePass.setPipeline(this.computePipeline);
     computePass.dispatchWorkgroups(Math.ceil(this.board.ballCount / 64), 1, 1);
     computePass.end();
